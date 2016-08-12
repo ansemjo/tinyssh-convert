@@ -9,8 +9,10 @@ makefile="${builddir}/Makefile"
 err() { >&2 printf '\e[1mERR!\e[0m  %s\n' "$*"; exit 1; }
 
 # get openssh-portable from GitHub
-mkdir ${builddir} || err "Could not create build directory!"
-git clone --depth=5 "${gitrepo}" "${builddir}" || err "Could not clone the repository."
+mkdir -p ${builddir} || err "Could not create build directory!"
+if ( ! git -C "${builddir}" remote -v 2>/dev/null | grep "${gitrepo}" >/dev/null 2>&1 ); then
+  git clone --depth=5 "${gitrepo}" "${builddir}" || err "Could not clone the repository."
+fi
 
 # copy tinyssh-convert source to builddir
 cp "./${name}.c" "${builddir}" || err "Failed to copy source into build directory."
@@ -26,8 +28,8 @@ fi
 oldpwd=$(pwd)
 cd "${builddir}"
 
-autoreconf || err "'autoreconf' failed."
-CFLAGS="-s -Os" ./configure --without-openssl || err "Configuration failed."
+test -x "configure" || autoreconf || err "'autoreconf' failed."
+test -f "Makefile" || CFLAGS="-s -Os" ./configure --without-openssl || err "Configuration failed."
 make "${name}" || err "Compilation failed!"
 
 # copy compiled file to original directory

@@ -148,11 +148,10 @@ static void do_convert()
 
 
     /* write to files */
-    //char *skey = calloc(strlen(TINYSSH_ED25519_SK_NAME) + strlen(destination) + 2, sizeof(char));
     char skey[1024]; sprintf(skey, "%s/%s", destination, TINYSSH_ED25519_SK_NAME);
     char pkey[1024]; sprintf(pkey, "%s/%s", destination, TINYSSH_ED25519_PK_NAME);
 
-    printf("Writing %skey to: %s\n", "private", skey);
+    printf("Writing %skey to: %s\n", "secret", skey);
     write_file(skey, 0600, (char *)privatekey->ed25519_sk, ED25519_SK_SZ);
 
     printf("Writing %skey to: %s\n", "public", pkey);

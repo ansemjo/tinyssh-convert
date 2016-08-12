@@ -31,18 +31,10 @@
 /* some openssh globals */
 #include "includes.h"
 
-/* system includes */
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
 
-#include <errno.h>
+/* system includes */
+#include <sys/stat.h>
 #include <fcntl.h>
-#include <netdb.h>
-#ifdef HAVE_PATHS_H
-# include <paths.h>
-#endif
-#include <pwd.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

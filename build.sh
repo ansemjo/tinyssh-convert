@@ -27,7 +27,7 @@ oldpwd=$(pwd)
 cd "${builddir}"
 
 autoreconf || err "'autoreconf' failed."
-./configure --without-openssl || err "Configuration failed."
+CFLAGS="-s -Os" ./configure --without-openssl || err "Configuration failed."
 make "${name}" || err "Compilation failed!"
 
 # copy compiled file to original directory

@@ -168,7 +168,12 @@ static void do_convert()
 /* usage info */
 static void usage(void)
 {
-	fprintf(stderr, "TODO ... :)\n");
+	fprintf(stderr,
+        "Usage: %s [-f keyfile] [-d destination_dir]\n"
+        "Convert an OpenSSH ed25510 privatekey file to TinySSH\n"
+        "compatible format keys and save them in destination_dir.\n",
+        __progname
+    );
 	exit(1);
 }
 
@@ -187,7 +192,7 @@ int main(int argc, char **argv)
 
 	log_init(argv[0], SYSLOG_LEVEL_INFO, SYSLOG_FACILITY_USER, 1);
 
-	while ((opt = getopt(argc, argv, "v" "f:d:")) != -1) {
+	while ((opt = getopt(argc, argv, "?hvf:d:")) != -1) {
 		switch (opt) {
 		
         /* filename */
@@ -217,6 +222,7 @@ int main(int argc, char **argv)
 			}
 			break;
 
+        case 'h':
 		case '?':
 		default:
 			usage();

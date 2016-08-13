@@ -60,7 +60,6 @@
 #define OPENSSH_ED25519_KEY "/etc/ssh/ssh_host_ed25519_key"
 
 extern char *__progname;
-int log_level = SYSLOG_LEVEL_INFO;
 
 /* the secretkey filename */
 char keyfile[1024];
@@ -183,16 +182,13 @@ static void usage(void)
 int main(int argc, char **argv)
 {
 	int opt;	
-    extern int optind;
 	extern char *optarg;
 
 	ssh_malloc_init();	/* must be called before any mallocs */
 	sanitise_stdfd();   /* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	__progname = ssh_get_progname(argv[0]);
 
-	log_init(argv[0], SYSLOG_LEVEL_INFO, SYSLOG_FACILITY_USER, 1);
-
-	while ((opt = getopt(argc, argv, "?hvf:d:")) != -1) {
+	while ((opt = getopt(argc, argv, "?hf:d:")) != -1) {
 		switch (opt) {
 		
         /* filename */
@@ -211,17 +207,6 @@ int main(int argc, char **argv)
 			have_destination = 1;
 			break;
 
-        /* verbosity */
-        case 'v':
-			if (log_level == SYSLOG_LEVEL_INFO)
-				log_level = SYSLOG_LEVEL_DEBUG1;
-			else {
-				if (log_level >= SYSLOG_LEVEL_DEBUG1 &&
-				    log_level < SYSLOG_LEVEL_DEBUG3)
-					log_level++;
-			}
-			break;
-
         case 'h':
 		case '?':
 		default:
@@ -229,13 +214,6 @@ int main(int argc, char **argv)
 		}
 	}
 
-	/* reinit */
-	log_init(argv[0], log_level, SYSLOG_FACILITY_USER, 1);
-
-	argv += optind;
-	argc -= optind;
-
-    
     do_convert();
     printf("Something went wrong.");
 	exit(0);

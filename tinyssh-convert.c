@@ -27,11 +27,6 @@
  * TinySSH is a small SSH server put into public domain [https://tinyssh.org/]. 
  */
 
-
-/* some openssh globals */
-#include "includes.h"
-
-
 /* system includes */
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -42,17 +37,20 @@
 #include <unistd.h>
 #include <limits.h>
 
+#include <bsd/string.h>
+
 /* local includes */
-#include "xmalloc.h"
-#include "sshkey.h"
-#include "sshbuf.h"
-#include "crypto_api.h" /* for ED25519_SK_SZ */
-#include "authfile.h"   /* loading private key */    
-#include "pathnames.h"  /* for _PATH_HOST_ED25519_KEY_FILE */
-#include "log.h"
-#include "misc.h"
-#include "ssherr.h"
-#include "atomicio.h"
+#include "errors.h"
+//#include "xmalloc.h"
+//#include "sshkey.h"
+//#include "sshbuf.h"
+//#include "crypto_api.h" /* for ED25519_SK_SZ */
+//#include "authfile.h"   /* loading private key */    
+//#include "pathnames.h"  /* for _PATH_HOST_ED25519_KEY_FILE */
+//#include "log.h"
+//#include "misc.h"
+//#include "ssherr.h"
+//#include "atomicio.h"
 
 #define TINYSSH_KEYDIR "/etc/tinyssh/sshkeydir"
 #define TINYSSH_ED25519_SK_NAME ".ed25519.sk"
@@ -68,7 +66,6 @@ int have_keyfile = 0;
 /* the destination directory */
 char destination[1024];
 int have_destination = 0;
-
 
 /* ask for a filename */
 static void ask_filename(const char *prompt, const char *initial, char *filename, size_t f_bufsize)
@@ -86,6 +83,21 @@ static void ask_filename(const char *prompt, const char *initial, char *filename
 	if (strcmp(buf, "") != 0) strlcpy(filename, buf, f_bufsize);
 }
 
+static void write_file(const char *filename, const int mode, void *data, size_t datasize)
+{
+    int fd, oerrno;
+    /* open file descriptor */
+	if ((fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, mode)) < 0)
+        fatal(IO_WRITE_FAIL, "Cannot open file for writing: '%s'\n", filename);
+
+    /* write and close or unlink on failure */
+	if (atomicio(vwrite, fd, data, datasize) != datasize ) {
+		close(fd);
+		unlink(filename);
+		fatal(IO_WRITE_FAIL, "Error on writing file: '%s'\n", filename);
+	}
+	close(fd);
+}
 
 /* Load a private key */
 static struct sshkey *load_keyfile(const char *filename)
@@ -106,25 +118,6 @@ static struct sshkey *load_keyfile(const char *filename)
     if (r != 0)	fatal("Load key \"%s\": %s", filename, ssh_err(r));
 	return private;
 }
-
-static void write_file(const char *filename, const int mode, void *data, size_t datasize)
-{
-    int fd, oerrno;
-    /* open file descriptor */
-	if ((fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, mode)) < 0)
-        fatal("Cannot open for writing (%s): %s\n", filename, ssh_err(SSH_ERR_SYSTEM_ERROR));
-
-    /* write and close or unlink on failure */
-	if (atomicio(vwrite, fd, data, datasize) != datasize ) {
-		oerrno = errno;
-		close(fd);
-		unlink(filename);
-		errno = oerrno;
-		fatal("Error on writing file (%s): %s\n", filename, ssh_err(SSH_ERR_SYSTEM_ERROR));
-	}
-	close(fd);
-}
-
 
 static void do_convert()
 {

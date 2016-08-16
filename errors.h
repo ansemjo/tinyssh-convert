@@ -1,14 +1,20 @@
 #ifndef _headerguard_errors_h_
 #define _headerguard_errors_h_
 
-#include <stdlib.h>
-
 /* general errors */
 #define FAILURE EXIT_FAILURE
 
-/* file I/O */
-#define IO_WRITE_FAIL 30
+enum errorcode {
+    ERR_UNKNOWN = 1,
+    ERR_USAGE,
 
-void fatal(int, const char *, ...);
+    ERR_IO_WRITE_FAIL,
+    ERR_IO_READ_FAIL,
+
+    filename_too_long,
+};
+
+void fatal (enum errorcode, const char *, ...);
+const char *errorcode (enum errorcode);
 
 #endif

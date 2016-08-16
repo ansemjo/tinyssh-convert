@@ -33,13 +33,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <bsd/string.h>
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
 
 /* local includes */
 #include "errors.h"
+#include "fileops.h"
 
 //#include "xmalloc.h"
 //#include "sshkey.h"
@@ -64,23 +64,6 @@ int have_keyfile = 0;
 /* the destination directory */
 char destination[1024];
 int have_destination = 0;
-
-/* ask for a filename */
-static void ask_filename(const char *prompt, const char *initial, char *filename, size_t f_bufsize)
-{
-	char buf[1024];
-
-    /* display initial prompt */
-	snprintf(filename, f_bufsize, "%s", initial);
-	printf("%s [%s]: ", prompt, filename);
-	fflush(stdout);
-	
-    /* copy to filename buffer */
-    if (fgets(buf, sizeof(buf), stdin) == NULL)	exit(1);
-	buf[strcspn(buf, "\n")] = '\0';
-	if (strcmp(buf, "") != 0) strncpy(filename, buf, f_bufsize);
-}
-
 
 /* usage info */
 static void usage(void)
@@ -124,21 +107,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-    //ask_filename ("Enter a filename", "/tmp/nope.txt", keyfile, sizeof keyfile);
-    int val, n;
-    char buf[1023];
-    while (1) {
-        printf("enter an integer: ");
-        fflush(stdout);
-        if (fgets(buf, sizeof buf, stdin)) {
-            if (sscanf(buf, "%d", &n) != 1)
-                printf("ERR\n");
-            else if (n != 0)
-                printf("great!\t %d += %d = %d\n", val, n, val += n);
-            else break;
-        }
-    }
-    printf("received '0', break loop.");
+    ask_filename ("Enter a filename", keyfile, sizeof keyfile, "/tmp/nope.txt");
+    if (strnzero(keyfile)) printf("Keyfile is: %s", keyfile);
     
     //usage();
 	exit(0);

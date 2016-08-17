@@ -3,8 +3,8 @@
 
 #include <sys/types.h>
 
-int open_read (const char *fn);
-int open_write (const char *fn);
+enum OPENMODE { WRITE, READ };
+int openfile (enum OPENMODE, const char *fn);
 
 int readall (int fd, void *buf, size_t buf_len);
 

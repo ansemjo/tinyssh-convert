@@ -27,15 +27,10 @@
  */
 
 /* system includes */
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string.h>
 #include <unistd.h>
-#include <limits.h>
 
 /* local includes */
 #include "errors.h"
@@ -49,17 +44,6 @@ int have_keyfile = 0;
 /* the destination directory */
 char destination[1024];
 int have_destination = 0;
-
-/* usage info */
-static void usage(void)
-{
-	fatal(ERR_USAGE,
-        "Usage: tinyssh-convert [-f keyfile] [-d destination_dir]\n"
-        "Convert an OpenSSH ed25510 privatekey file to TinySSH\n"
-        "compatible format keys and save them in destination_dir.\n"
-    );
-}
-
 
 /* ======  MAIN  ====== */
 
@@ -99,6 +83,5 @@ int main(int argc, char **argv)
     
     debugbuf(keyfile, destination, strlen(destination));
     
-    //usage();
 	exit(0);
 }

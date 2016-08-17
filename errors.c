@@ -13,7 +13,7 @@ const char *errortext (enum ERRORCODE err)
 {
     switch (err) {
         case ERR_USAGE:
-            return "wrong usage?";
+            return "wrong usage of program";
             break;
         case ERR_IO_WRITE_FAIL:
         case ERR_IO_READ_FAIL:
@@ -42,4 +42,14 @@ void fatal (enum ERRORCODE err, const char *format, ...)
 
     va_end(args);
     exit(err);
+}
+
+/* print usage message and exit */
+void usage ()
+{
+    #ifdef USAGE_MESSAGE
+        fatal(ERR_USAGE, USAGE_MESSAGE);
+    #else
+        fatal(ERR_USAGE, NULL);
+    #endif
 }

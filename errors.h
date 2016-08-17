@@ -1,8 +1,7 @@
 #ifndef _headerguard_errors_h_
 #define _headerguard_errors_h_
 
-/* general errors */
-#define FAILURE EXIT_FAILURE
+#include "defines.h"
 
 enum ERRORCODE {
     ERR_UNKNOWN = 1,
@@ -16,5 +15,6 @@ enum ERRORCODE {
 
 void fatal (enum ERRORCODE, const char *, ...);
 const char *errortext (enum ERRORCODE);
+void usage ();
 
 #endif

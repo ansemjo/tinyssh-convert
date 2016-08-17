@@ -91,9 +91,9 @@ int main(int argc, char **argv)
 		}
 	}
 
-    //ask_filename ("Enter a filename", keyfile, sizeof keyfile, "/tmp/nope.txt");
-    //if (strnzero(keyfile)) printf("Keyfile is: %s\n", keyfile);
-    strncpy(keyfile, "/tmp/nopenopenopenopenopenope.txt", sizeof keyfile);
+    prompt ("Enter a filename", keyfile, sizeof keyfile, "/tmp/nope.txt");
+    if (strnzero(keyfile)) printf("Keyfile is: %s\n", keyfile);
+    
     debugbuf("keyfile", keyfile, strlen(keyfile));
     
     //usage();

@@ -4,6 +4,7 @@
 
 #include "utils.h"
 
+
 /* string is not null and not empty */
 int strnzero (const char *str) {
     if (str != NULL)
@@ -11,8 +12,9 @@ int strnzero (const char *str) {
     return 0;
 }
 
+
 /* ask for a filename */
-void ask_filename (const char *prmt, char *fn, size_t fn_len, const char *dfn) {
+void prompt (const char *prmt, char *fn, size_t fn_len, const char *dfn) {
     char buf[fn_len];
     
     /* if default path is given, copy that to fn already */
@@ -37,10 +39,11 @@ void ask_filename (const char *prmt, char *fn, size_t fn_len, const char *dfn) {
 	if (strnzero(buf)) strncpy(fn, buf, fn_len);
 }
 
+
 /* print the contents of a buffer in hex */
 void debugbuf (const char *name, const char *buf, size_t buf_len)
 {
-    printf("%8s   %s: %s", "address", "content of", name != NULL ? name : "UNKNOWN");
+    printf("\n%8s   %s: %s", "address", "content of", name != NULL ? name : "UNKNOWN");
 	for (size_t i = 0; i < buf_len; i++) {
 
 		/* print address on newline */
@@ -50,5 +53,5 @@ void debugbuf (const char *name, const char *buf, size_t buf_len)
         /* print contents in hex */
 		printf(" %02x", buf[i]);
 	}
-printf("\n};\n");
+    printf("\n");
 }

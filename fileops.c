@@ -8,10 +8,11 @@
 #include "errors.h"
 
 /* open file and return file descriptor */
-int openfile (enum OPENMODE mode, const char *fn)
+int openfile (enum IO_MODE mode, const char *fn)
 {
     /* either read or write! */
-    if (mode != ( WRITE | READ ) ) return -1;
+    if (mode != WRITE && mode != READ)
+        return -1; /* TODO */
 
     #ifdef O_CLOEXEC
         switch (mode) {
@@ -24,44 +25,15 @@ int openfile (enum OPENMODE mode, const char *fn)
             case WRITE: fd = open(fn, O_CREAT | O_WRONLY | O_NONBLOCK, 0644);
             case READ:  fd = open(fn, O_RDONLY | O_NONBLOCK);
         }
-        if (fd == -1) return -1;
+        if (fd == -1) return -1; /* TODO */
         fcntl(fd, F_SETFD, 1);
         return fd;
     #endif
 }
 
+
 /* read up to buf_len bytes from file descriptor */
-int readall (int fd, void *buf, size_t buf_len)
-{
-    size_t chunk_len;
-    unsigned char *bufptr = (unsigned char *)buf;
-
-    while (buf_len > 0) {
-
-        /* set chunk max. 1024 KiB */
-        chunk_len = buf_len;
-        if (chunk_len > 1048576)
-            chunk_len = 1048576;
-        
-        /* read next chunk */
-        chunk_len = read(fd, bufptr, chunk_len);
-
-        /* handle errors or blocks */
-        if (chunk_len == 0) errno = EPROTO;
-        if (chunk_len <= 0) {
-            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) continue;
-            return -2;
-        }
-
-        /* increment pointer, decrement remaining length */
-        bufptr += chunk_len;
-        buf_len -= chunk_len;
-    }
-    return 0;
-}
-
-/* write all to file descriptor */
-int writeall (int fd, const void *buf, size_t buf_len)
+int readwrite (enum IO_MODE mode, int fd, void *buf, size_t buf_len)
 {
     size_t chunk_len;
     char *bufptr = (char *)buf;
@@ -72,22 +44,38 @@ int writeall (int fd, const void *buf, size_t buf_len)
         chunk_len = buf_len;
         if (chunk_len > 1048576)
             chunk_len = 1048576;
-
-        /* write next chunk */
-        chunk_len = write(fd, buf, chunk_len);
-
-        /* handle errors or blocks */
-        if (chunk_len < 0) {
-            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
-                struct pollfd p;
-                p.fd = fd;
-                p.events = POLLOUT | POLLERR;
-                poll(&p,1,-1);
-                continue;
-            }
-            return -1;
-        }
         
+        if (mode == READ) {
+
+            /* read next chunk */
+            chunk_len = read(fd, bufptr, chunk_len);
+
+            /* handle errors or blocks */
+            if (chunk_len == 0) errno = EPROTO;
+            if (chunk_len <= 0) {
+                if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) continue;
+                return -2; /* TODO */
+            }
+
+        } else if (mode == WRITE) {
+
+            /* write next chunk */
+            chunk_len = write(fd, buf, chunk_len);
+
+            /* handle errors or blocks */
+            if (chunk_len < 0) {
+                if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK) {
+                    struct pollfd p;
+                    p.fd = fd;
+                    p.events = POLLOUT | POLLERR;
+                    poll(&p,1,-1);
+                    continue;
+                }
+                return -2; /* TODO */
+            }
+
+        } else return -3; /* TODO */
+
         /* increment pointer, decrement remaining length */
         bufptr += chunk_len;
         buf_len -= chunk_len;
@@ -106,13 +94,13 @@ int loadfile (const char *file, void *buf, size_t buf_len)
     if (fd == -1) fatal(ERR_IO_READ_FAIL, NULL);
 
     /* read up to buf_len bytes */
-    ret = readall(fd, buf, buf_len);
+    ret = readwrite(READ, fd, buf, buf_len);
     close(fd);
     return ret;
 }
 
 /* save a buffer to file */
-int savefile (const char *file, const void *buf, size_t buf_len)
+int savefile (const char *file, void *buf, size_t buf_len)
 {
     int fd, ret;
     
@@ -121,7 +109,7 @@ int savefile (const char *file, const void *buf, size_t buf_len)
     if (fd == -1) fatal(ERR_IO_READ_FAIL, NULL);
 
     /* write buffer to file and fsync */
-    if ((ret = writeall(fd, buf, buf_len)) != -1)
+    if ((ret = readwrite(WRITE, fd, buf, buf_len)) != -1)
         fsync(fd);
     close(fd);
     return ret;

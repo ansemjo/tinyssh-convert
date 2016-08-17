@@ -3,13 +3,9 @@
 
 #include <sys/types.h>
 
-enum OPENMODE { WRITE, READ };
-int openfile (enum OPENMODE, const char *fn);
-
-int readall (int fd, void *buf, size_t buf_len);
-int writeall (int fd, const void *buf, size_t buf_len);
+enum IO_MODE { WRITE, READ };
 
 int loadfile (const char *file, void *buf, size_t buf_len);
-int savefile (const char *file, const void *buf, size_t buf_len);
+int savefile (const char *file, void *buf, size_t buf_len);
 
 #endif

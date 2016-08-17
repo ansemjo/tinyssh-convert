@@ -6,8 +6,8 @@
 
 /* string is not null and not empty */
 int strnzero (const char *str) {
-    if (str != NULL && strcmp(str, "") != 0)
-        return 1;
+    if (str != NULL)
+        return strcmp(str, "") != 0;
     return 0;
 }
 

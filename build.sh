@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-name=$1
+name=${1:-tinyssh-convert}
 
 err() { >&2 printf '\e[1mERR!\e[0m  %s\n' "$*"; exit 1; }
 

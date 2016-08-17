@@ -40,6 +40,7 @@
 /* local includes */
 #include "errors.h"
 #include "utils.h"
+#include "fileops.h"
 
 /* the secretkey filename */
 char keyfile[1024];
@@ -93,9 +94,10 @@ int main(int argc, char **argv)
 
     if (!have_keyfile)
         prompt ("Enter a filename", keyfile, sizeof keyfile, "/tmp/nope.txt");
-    if (strnzero(keyfile)) printf("Keyfile is: %s\n", keyfile);
     
-    debugbuf("keyfile", keyfile, strlen(keyfile));
+    loadfile(keyfile, destination, sizeof destination);
+    
+    debugbuf(keyfile, destination, strlen(destination));
     
     //usage();
 	exit(0);

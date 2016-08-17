@@ -6,9 +6,10 @@
 #include <stdlib.h>
 
 #include "errors.h"
+#include "utils.h"
 
 /* get a string describing the errorcode */
-const char *errcode(enum errorcode err)
+const char *errortext (enum ERRORCODE err)
 {
     switch (err) {
         case ERR_USAGE:
@@ -18,6 +19,7 @@ const char *errcode(enum errorcode err)
         case ERR_IO_READ_FAIL:
             return "IO error occured";
             break;
+        case ERR_UNKNOWN:
         default:
             return "unknown error";
             break;
@@ -25,18 +27,19 @@ const char *errcode(enum errorcode err)
 }
 
 /* print an error message and exit with failure code */
-void fatal(enum errorcode err, const char *format, ...)
+void fatal (enum ERRORCODE err, const char *format, ...)
 {
     if (err < 1 || err > 255) err = ERR_UNKNOWN;
 
     va_list args;
     va_start(args, format);
 
-    /* see if custom error message supplied */
-    if (format == NULL || strlen(format) == 0)
-        fprintf(stderr, "[%d] %s\n", err, errcode(err));
-    else
+    /* print custom error message if supplied */
+    if ( strnzero(format) )
         vfprintf(stderr, format, args);
+    else
+        fprintf(stderr, "[%d] %s\n", err, errortext(err));
+
     va_end(args);
     exit(err);
 }

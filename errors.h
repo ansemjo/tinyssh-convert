@@ -4,7 +4,7 @@
 /* general errors */
 #define FAILURE EXIT_FAILURE
 
-enum errorcode {
+enum ERRORCODE {
     ERR_UNKNOWN = 1,
     ERR_USAGE,
 
@@ -14,7 +14,7 @@ enum errorcode {
     filename_too_long,
 };
 
-void fatal (enum errorcode, const char *, ...);
-const char *errorcode (enum errorcode);
+void fatal (enum ERRORCODE, const char *, ...);
+const char *errortext (enum ERRORCODE);
 
 #endif

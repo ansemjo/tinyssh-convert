@@ -2,8 +2,7 @@
  * MIT License
  *
  * Copyright (c) 2016 Anton Semjonov
- * This work is derived from ssh-keygen ($OpenBSD: ssh-keygen.c,v 1.290 2016/05/02 09:36:42 djm Exp)
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -34,28 +33,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string.h>
 #include <unistd.h>
 #include <limits.h>
 
 /* local includes */
 #include "errors.h"
-#include "fileops.h"
-
-//#include "xmalloc.h"
-//#include "sshkey.h"
-//#include "sshbuf.h"
-//#include "crypto_api.h" /* for ED25519_SK_SZ */
-//#include "authfile.h"   /* loading private key */    
-//#include "pathnames.h"  /* for _PATH_HOST_ED25519_KEY_FILE */
-//#include "log.h"
-//#include "misc.h"
-//#include "ssherr.h"
-//#include "atomicio.h"
-
-#define TINYSSH_KEYDIR "/etc/tinyssh/sshkeydir"
-#define TINYSSH_ED25519_SK_NAME ".ed25519.sk"
-#define TINYSSH_ED25519_PK_NAME "ed25519.pk"
-#define OPENSSH_ED25519_KEY "/etc/ssh/ssh_host_ed25519_key"
+#include "utils.h"
 
 /* the secretkey filename */
 char keyfile[1024];
@@ -107,8 +91,10 @@ int main(int argc, char **argv)
 		}
 	}
 
-    ask_filename ("Enter a filename", keyfile, sizeof keyfile, "/tmp/nope.txt");
-    if (strnzero(keyfile)) printf("Keyfile is: %s\n", keyfile);
+    //ask_filename ("Enter a filename", keyfile, sizeof keyfile, "/tmp/nope.txt");
+    //if (strnzero(keyfile)) printf("Keyfile is: %s\n", keyfile);
+    strncpy(keyfile, "/tmp/nopenopenopenopenopenope.txt", sizeof keyfile);
+    debugbuf("keyfile", keyfile, strlen(keyfile));
     
     //usage();
 	exit(0);

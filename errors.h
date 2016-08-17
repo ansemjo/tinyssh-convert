@@ -10,7 +10,7 @@ enum ERRORCODE {
     ERR_IO_WRITE_FAIL,
     ERR_IO_READ_FAIL,
 
-    filename_too_long,
+    ERR_FILENAME_TO_LONG,
 };
 
 void fatal (enum ERRORCODE, const char *, ...);

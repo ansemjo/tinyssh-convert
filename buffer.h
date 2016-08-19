@@ -18,20 +18,21 @@ static void * (* const volatile volatile_memset)(void *,  int, size_t) = memset;
 
 
 /* size constraints */
-#define BUFFER_ALLOCATION_INITIAL                512  /*   512 B   */
-#define BUFFER_ALLOCATION_INCREMENT             1024  /*  1024 B   */
+#define BUFFER_ALLOCATION_INITIAL                32  /*   512 B   */
+#define BUFFER_ALLOCATION_INCREMENT             16  /*  1024 B   */
 #define BUFFER_ALLOCATION_MAXIMUM       64*1024*1024  /*    64 MiB */
 
 /* status codes */
 typedef enum {
     BUFFER_SUCCESS = 0,
     BUFFER_FAILURE = 1,
-
-    /* allocating memory */
+ /* general errors */
+    BUFFER_E_NULLPOINTER,
+ /* allocating memory */
     BUFFER_E_RESERVE_TOO_LARGE,
+    BUFFER_E_MEMCPY_FAIL,
     BUFFER_E_REALLOC_FAILED,
-
-} BUFFER_STATUSCODE;
+} bufferstatus;
 
 /* opaque struct */
 struct buffer;
@@ -42,7 +43,7 @@ struct buffer * newbuffer   ();
 
 /* put new data in */
             int buffer_reserve  (struct buffer *buf, size_t request_size, unsigned char **request_ptr);
-            int buffer_put      (struct buffer *buf, size_t datalen, const void *data);
+            int buffer_put      (struct buffer *buf, size_t datalength, const void *data);
 
 /* debugging */
 unsigned char * buffer_dataptr    (struct buffer *buf);

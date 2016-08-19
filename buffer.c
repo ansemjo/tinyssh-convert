@@ -93,7 +93,6 @@ int buffer_reserve (struct buffer *buf, size_t request_size, unsigned char **req
 {
     size_t needed_size;
     unsigned char *newdata;
-    int status = BUFFER_FAILURE;
 
     if (request_ptr != NULL) *request_ptr = NULL;
 
@@ -120,6 +119,27 @@ int buffer_reserve (struct buffer *buf, size_t request_size, unsigned char **req
     buf->size += request_size;
 
     if (request_ptr != NULL) *request_ptr = newdata;
+    return BUFFER_SUCCESS;
+}
+
+/* put new data into buffer */
+int buffer_put (struct buffer *buf, size_t datalength, const void *data)
+{
+    unsigned char *put;
+    bufferstatus e = BUFFER_FAILURE;
+
+    if (data == NULL || datalength == 0)
+        return BUFFER_E_NULLPOINTER;
+
+    /* reserve space */
+    if ((e = buffer_reserve(buf, datalength, &put)) != BUFFER_SUCCESS)
+        return e;
+
+    /* copy data */
+    if (memcpy(put, data, datalength) == NULL)
+        return BUFFER_E_MEMCPY_FAIL;
+    
+    /* success */
     return BUFFER_SUCCESS;
 }
 

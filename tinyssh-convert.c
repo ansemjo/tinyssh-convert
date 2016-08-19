@@ -94,19 +94,22 @@ int main(int argc, char **argv)
     struct buffer *newbuff;
     newbuff = newbuffer();
 
-    printf("allocated %d bytes for new buffer\n", newbuff->allocation);
+    printf("allocated new buffer\n");
+    buffer_dump(newbuff);
 
-    memfill(newbuff->dataptr, newbuff->allocation, 0xAE);
+    unsigned char *newdata;
+    int length[]  = {   8,   16,   16,   32};
+    int pattern[] = {0xAE, 0xFF, 0x13, 0xF0};
 
-    debugbuf("newbuff struct", (unsigned char *)newbuff, sizeof *newbuff);
-    debugbuf("newbuff allocated data", newbuff->dataptr, newbuff->allocation);
+    for (int i = 0; i < sizeof *length; i++) {
+        newdata = buffer_reserve(newbuff, length[i]);
+        memset(newdata, pattern[i], length[i]);
+    }
 
-    unsigned char *datapointer = newbuff->dataptr;
-    size_t allocationsize = newbuff->allocation;
+    printf("enlarged buffer with some data\n");
+    buffer_dump(newbuff);
 
-    bufferfree(newbuff);
-
-    debugbuf("newbuff allocated data AFTER FREE", datapointer, allocationsize);
+    freebuffer(newbuff);
 
 	exit(0);
 }

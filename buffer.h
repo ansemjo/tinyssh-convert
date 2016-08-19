@@ -16,44 +16,25 @@ static void * (* const volatile volatile_memset)(void *,  int, size_t) = memset;
 #define memfill(ptr, size, fill) volatile_memset(   ptr, fill,   size)
 
 /* size constraints */
-#define BUFFER_ALLOCATION_INITIAL    512*Bytes
-#define BUFFER_ALLOCATION_STEP       512*Bytes
-#define BUFFER_ALLOCATION_MAXIMUM   64*MiBytes
+#define BUFFER_ALLOCATION_INITIAL       512*Bytes
+#define BUFFER_ALLOCATION_INCREMENT    1024*Bytes
+#define BUFFER_ALLOCATION_MAXIMUM      64*MiBytes
 
 /* opaque struct */
-//struct buffer;
+struct buffer;
 
-struct buffer {
-    unsigned char *dataptr; /* pointer to stored data */
-    size_t offset;          /* offset to first available byte */
-    size_t length;          /* length of data stored */
-    size_t allocation;      /* length of allocated memory */
-
-/* ASCIIFLow Structure
-                                   +--A-L-L-O-C--+
-                                   |             |
-                       +------------>+-D-A-T-A-+ |
-    +-struct-buffer-+  |           | |    |    | |
-    |               |  |           | |    |    | |
-    |     *dataptr +---+  +-------------> |    | |
-    |               |     |        | |    |    | |
-    |       offset +------+        | |----v----| |
-    |               |              | |         | |
-    |       length +---------------->|         | |
-    |               |              | |         | |
-    |    allocated +-----+         | |         | |
-    |               |    |         | |         | |
-    +---------------+    +-------->| |         | |
-                                   | |         | |
-                                   | +---------+ |
-                                   |             |
-                                   |             |
-                                   +-------------+      */
-};
-
-
-/* create & free buffers */
+/* allocate and free buffers */
 struct buffer *newbuffer ();
-void bufferfree (struct buffer *ptr);
+void freebuffer (struct buffer *buf);
+
+/* put new data in */
+unsigned char *buffer_reserve (struct buffer *buf, size_t request);
+
+/* debugging */
+unsigned char *buffer_dataptr (struct buffer *buf);
+size_t buffer_length (struct buffer *buf);
+size_t buffer_offset (struct buffer *buf);
+size_t buffer_allocation (struct buffer *buf);
+void buffer_dump (struct buffer *buf);
 
 #endif

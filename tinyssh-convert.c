@@ -47,9 +47,6 @@ int have_sourcefn = 0;
 char destfn[1024];
 int have_destfn = 0;
 
-/* buffer for reading and writing files */
-char filebuf[1024 * 1024];
-
 /* ======  MAIN  ====== */
 
 int main(int argc, char **argv)
@@ -83,14 +80,19 @@ int main(int argc, char **argv)
 	}
 
     /* prompt for source if not given */
-    //if (!have_sourcefn)
-    //    prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt");
+    if (!have_sourcefn)
+        prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt");
     /* load to buffer */
-    //loadfile(sourcefn, filebuf, sizeof filebuf);
+    struct buffer *filebuffer;
+    int e;
+    if ((e = loadfile(sourcefn, &filebuffer)) != 0)
+        printf("loadfile status: %d", e);
 
     /* show contents of file */
-    //debugbuf(sourcefn, filebuf, strlen(filebuf));
+    buffer_dump(filebuffer);
+    freebuffer(filebuffer);
 
+    /*
     struct buffer *newbuff;
     newbuff = newbuffer();
 
@@ -110,6 +112,7 @@ int main(int argc, char **argv)
     buffer_dump(newbuff);
 
     freebuffer(newbuff);
+    */
 
 	exit(0);
 }

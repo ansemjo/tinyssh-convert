@@ -66,6 +66,27 @@ void freebuffer (struct buffer *buf)
     free(buf);
 }
 
+/* reset data in buffer */ 
+void resetbuffer (struct buffer *buf)
+{
+    if (buf == NULL) return;
+    unsigned char *newdata;
+
+    /* zero the data */
+    if (buf->data != NULL)
+        memzero(buf->data, buf->allocation);
+    buf->offset = buf->size = 0;
+
+    /* realloc if larger than initial */
+    if (buf->allocation != BUFFER_ALLOCATION_INITIAL) {
+        if ((newdata = realloc(buf->data, BUFFER_ALLOCATION_INITIAL)) != NULL) {
+            buf->data = newdata;
+            buf->allocation = BUFFER_ALLOCATION_INITIAL;
+        }
+    }
+
+}
+
 /* TODO, maybe? */
 void freebuffer_paranoid (struct buffer *buf)
 { /*
@@ -126,9 +147,9 @@ int buffer_reserve (struct buffer *buf, size_t request_size, unsigned char **req
 int buffer_put (struct buffer *buf, size_t datalength, const void *data)
 {
     unsigned char *put;
-    bufferstatus e = BUFFER_FAILURE;
+    enum buffer_status e = BUFFER_FAILURE;
 
-    if (data == NULL || datalength == 0)
+    if (data == NULL)
         return BUFFER_E_NULLPOINTER;
 
     /* reserve space */

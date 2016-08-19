@@ -1,14 +1,8 @@
-#include <sys/types.h>
-#include <unistd.h>
-#include <errno.h>
-#include <poll.h>
-#include <fcntl.h>
-
 #include "fileops.h"
-#include "errors.h"
 
 /* openfile and readwrite need to know what to do */
 enum IO_MODE { WRITE, READ };
+
 
 /* open file and return file descriptor */
 int openfile (enum IO_MODE mode, const char *fn)
@@ -86,20 +80,70 @@ int readwrite (enum IO_MODE mode, int fd, void *buf, size_t buf_len)
     return 0;
 }
 
+#define FILEOPS_CHUNKSIZE 1024
+
+int read_to_buffer (int fd, struct buffer *filebuf)
+{
+    enum fileops_status e = FILEOPS_FAILURE;
+    unsigned char readbuf[ FILEOPS_CHUNKSIZE ];
+    size_t readlen;
+
+    /* setup polling */
+    struct pollfd polling;
+    polling.fd = fd;
+    polling.events = POLLIN | POLLERR; /* extend if writing too ! */
+    
+
+    for (;;) {
+        /* read chunk to local buffer */
+        readlen = read(fd, readbuf, sizeof readbuf);
+
+        if (readlen == 0) { /* EOF */
+            e = FILEOPS_SUCCESS;
+            break;
+        } else if (readlen < 0) { /* ERROR or BLOCKED */
+            if (errno == EINTR) continue;
+			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			    poll(&polling, 1, -1);
+				continue;
+			}
+            e = FILEOPS_E_IOERROR;
+            break;
+        }
+
+        /* put into buffer */
+        if ((e = buffer_put(filebuf, readlen, readbuf)) != 0)
+            break;
+    }
+
+    memzero(readbuf, sizeof readbuf);
+    if (e != FILEOPS_SUCCESS) resetbuffer(filebuf);
+    return e;
+}
+
 
 /* load a file to buffer */
-int loadfile (const char *file, void *buf, size_t buf_len)
+int loadfile (const char *file, struct buffer **filebuf)
 {
-    int fd, ret;
+    enum fileops_status e = FILEOPS_FAILURE;
+    int fd;
 
+    if (filebuf == NULL || file == NULL)
+        return FILEOPS_E_NULLPOINTER;
+    *filebuf = NULL;
+    
     /* open for reading */
-    fd = openfile(READ, file);
-    if (fd == -1) fatal(ERR_IO_READ_FAIL, NULL);
+    if ((fd = openfile(READ, file)) == -1)
+        return FILEOPS_E_OPEN_READING;
 
-    /* read up to buf_len bytes */
-    ret = readwrite(READ, fd, buf, buf_len);
+    /* create a new buffer */ 
+    if ((*filebuf = newbuffer()) == NULL)
+        return FILEOPS_E_ALLOC_FAIL;
+
+    /* read file */
+    e = read_to_buffer(fd, *filebuf);
     close(fd);
-    return ret;
+    return e;
 }
 
 /* save a buffer to file */

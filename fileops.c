@@ -7,6 +7,9 @@
 #include "fileops.h"
 #include "errors.h"
 
+/* openfile and readwrite need to know what to do */
+enum IO_MODE { WRITE, READ };
+
 /* open file and return file descriptor */
 int openfile (enum IO_MODE mode, const char *fn)
 {

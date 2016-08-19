@@ -37,6 +37,7 @@
 #include "errors.h"
 #include "utils.h"
 #include "fileops.h"
+#include "buffer.h"
 
 /* the secretkey filename */
 char sourcefn[1024];
@@ -82,22 +83,30 @@ int main(int argc, char **argv)
 	}
 
     /* prompt for source if not given */
-    if (!have_sourcefn)
-        prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt");
-
+    //if (!have_sourcefn)
+    //    prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt");
     /* load to buffer */
-    loadfile(sourcefn, filebuf, sizeof filebuf);
+    //loadfile(sourcefn, filebuf, sizeof filebuf);
 
     /* show contents of file */
-    debugbuf(sourcefn, filebuf, strlen(filebuf));
+    //debugbuf(sourcefn, filebuf, strlen(filebuf));
 
-    /* prompt for destination if not given */
-    if (!have_destfn)
-        prompt ("Enter a destination filename (umask 077)", destfn, sizeof destfn, "/tmp/nope");
+    struct buffer *newbuff;
+    newbuff = newbuffer();
 
-    /* save to file */
-    umask(077);
-    savefile(destfn, filebuf, strlen(filebuf));
+    printf("allocated %d bytes for new buffer\n", newbuff->allocation);
+
+    memfill(newbuff->dataptr, newbuff->allocation, 0xAE);
+
+    debugbuf("newbuff struct", (unsigned char *)newbuff, sizeof *newbuff);
+    debugbuf("newbuff allocated data", newbuff->dataptr, newbuff->allocation);
+
+    unsigned char *datapointer = newbuff->dataptr;
+    size_t allocationsize = newbuff->allocation;
+
+    bufferfree(newbuff);
+
+    debugbuf("newbuff allocated data AFTER FREE", datapointer, allocationsize);
 
 	exit(0);
 }

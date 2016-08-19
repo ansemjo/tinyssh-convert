@@ -1,31 +1,26 @@
-#include <sys/param.h>
-
 #include "buffer.h"
-#include "utils.h"
 
 struct buffer {
-    unsigned char *dataptr; /* pointer to stored data */
-    size_t size;            /* length of data stored */
-    size_t offset;          /* offset to first available byte */
-    size_t allocation;      /* length of allocated memory */
+    unsigned char *data;  /* pointer to stored data */
+    size_t size;          /* length of data stored */
+    size_t offset;        /* offset to first available byte */
+    size_t allocation;    /* length of allocated memory */
 
 /* ASCIIFLow Structure
                                    +--A-L-L-O-C--+
+                          +--------->+-D-A-T-A-+ |
+    +-struct-buffer-+    /         | |    |    | |
+    |               |   /          | |    |    | |
+    |     *dataptr +---+         +------> |    | |
+    |               |           /  | |    |    | |
+    |         size +----+      /   | |____V____| |
+    |               |    \    /    | |         | |
+    |       offset +------\--+     | |         | |
+    |               |      \       | |         | |
+    |    allocated +---+    +------->|         | |
+    |               |   \          | |         | |
+    +---------------+    +-------->| +---------+ |
                                    |             |
-                       +------------>+-D-A-T-A-+ |
-    +-struct-buffer-+  |           | |    |    | |
-    |               |  |           | |    |    | |
-    |     *dataptr +---+  +-------------> |    | |
-    |               |     |        | |    |    | |
-    |       offset +------+        | |----v----| |
-    |               |              | |         | |
-    |       length +---------------->|         | |
-    |               |              | |         | |
-    |    allocated +-----+         | |         | |
-    |               |    |         | |         | |
-    +---------------+    +-------->| |         | |
-                                   | |         | |
-                                   | +---------+ |
                                    |             |
                                    |             |
                                    +-------------+      */
@@ -46,7 +41,7 @@ struct buffer *newbuffer ()
     
     /* set initial allocation size & allocate data */
     new->allocation = BUFFER_ALLOCATION_INITIAL;
-    if ( (new->dataptr = zalloc(new->allocation)) == NULL ) {
+    if ( (new->data = zalloc(new->allocation)) == NULL ) {
         free(new);
         return NULL;
     }
@@ -61,9 +56,9 @@ void freebuffer (struct buffer *buf)
     if (buf == NULL) return;
 
     /* clean and free data */
-    if (buf->dataptr != NULL) {
-        memzero(buf->dataptr, buf->allocation);
-        free(buf->dataptr);
+    if (buf->data != NULL) {
+        memzero(buf->data, buf->allocation);
+        free(buf->data);
     }
 
     /* clean and free struct */
@@ -94,34 +89,38 @@ void freebuffer_paranoid (struct buffer *buf)
 /* +-----------------+ */
 
 /* reserve space for new data and return pointer */
-unsigned char *buffer_reserve (struct buffer *buf, size_t request)
+int buffer_reserve (struct buffer *buf, size_t request_size, unsigned char **request_ptr)
 {
-    size_t needed;
-    unsigned char *dataptr;
+    size_t needed_size;
+    unsigned char *newdata;
+    int status = BUFFER_FAILURE;
 
-    /* calculate next increment of needed new size */
-    needed = roundup(request + buf->size, BUFFER_ALLOCATION_INCREMENT);
+    if (request_ptr != NULL) *request_ptr = NULL;
+
+    /* calculate next largest increment of the needed new size */
+    needed_size = roundup(request_size + buf->size, BUFFER_ALLOCATION_INCREMENT);
 
     /* is this a reasonable request? */
-    if (request > BUFFER_ALLOCATION_MAXIMUM || needed > BUFFER_ALLOCATION_MAXIMUM)
-        return NULL;
+    if (needed_size > BUFFER_ALLOCATION_MAXIMUM)
+        return BUFFER_E_RESERVE_TOO_LARGE;
 
     /* do we need more allocation? */
-    if (needed > buf->allocation) {
-        /* reallocate */
-        if ((dataptr = realloc(buf->dataptr, needed)) == NULL)
-            return NULL;
+    if (needed_size > buf->allocation) {
+        /* reallocate with more mem */
+        if ((newdata = realloc(buf->data, needed_size)) == NULL)
+            return BUFFER_E_REALLOC_FAILED;
         
-        /* set new values in buffer */
-        buf->allocation = needed;
-        buf->dataptr = dataptr;
+        /* set new data values in buffer */
+        buf->allocation = needed_size;
+        buf->data = newdata;
     }
 
     /* adjust 'used' size of buffer and return pointer */
-    dataptr = buf->dataptr + buf->size;
-    buf->size += request;
+    newdata = buf->data + buf->size;
+    buf->size += request_size;
 
-    return dataptr;
+    if (request_ptr != NULL) *request_ptr = newdata;
+    return BUFFER_SUCCESS;
 }
 
 /* +-----------+ */
@@ -129,7 +128,7 @@ unsigned char *buffer_reserve (struct buffer *buf, size_t request)
 /* +-----------+ */
 
 unsigned char *buffer_dataptr (struct buffer *buf) {
-    if (buf != NULL) return buf->dataptr; else return NULL; }
+    if (buf != NULL) return buf->data; else return NULL; }
 
 size_t buffer_length (struct buffer *buf) {
     if (buf != NULL) return buf->size; else return 0; }
@@ -142,4 +141,4 @@ size_t buffer_allocation (struct buffer *buf) {
 
 void buffer_dump (struct buffer *buf) {
     if (buf != NULL) debugbuf("STRUCT", (unsigned char *)buf, sizeof(struct buffer));
-    if (buf->dataptr != NULL) debugbuf("BUFFER DATA", buf->dataptr, buf->allocation); }
+    if (buf->data != NULL) debugbuf("BUFFER DATA", buf->data, buf->allocation); }

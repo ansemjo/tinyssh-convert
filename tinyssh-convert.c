@@ -98,12 +98,12 @@ int main(int argc, char **argv)
     buffer_dump(newbuff);
 
     unsigned char *newdata;
-    int length[]  = {   8,   16,   16,   32};
+    int length[]  = {   8,   7,   16,   32};
     int pattern[] = {0xAE, 0xFF, 0x13, 0xF0};
 
     for (int i = 0; i < sizeof *length; i++) {
-        newdata = buffer_reserve(newbuff, length[i]);
-        memset(newdata, pattern[i], length[i]);
+        if (buffer_reserve(newbuff, length[i], &newdata) == BUFFER_SUCCESS)
+            memset(newdata, pattern[i], length[i]);
     }
 
     printf("enlarged buffer with some data\n");

@@ -82,6 +82,7 @@ int main(int argc, char **argv)
     /* prompt for source if not given */
     if (!have_sourcefn)
         prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt");
+    
     /* load to buffer */
     struct buffer *filebuffer;
     int e;
@@ -90,6 +91,14 @@ int main(int argc, char **argv)
 
     /* show contents of file */
     buffer_dump(filebuffer);
+
+    /* ask for destination */
+    if (!have_destfn)
+        prompt ("Enter a destination filename", destfn, sizeof destfn, "/tmp/nope.txt");
+
+    if ((e = savefile(destfn, filebuffer)) != 0)
+        printf("savefile status: %d", e);
+    
     freebuffer(filebuffer);
 
     /*

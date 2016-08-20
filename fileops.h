@@ -12,21 +12,25 @@
 
 /* status codes */
 enum fileops_status {
-    FILEOPS_SUCCESS = 0,
-    FILEOPS_FAILURE = 1,
+    FILEOPS_SUCCESS =    0,
+    FILEOPS_FAILURE = -100,
  /* general errors */
-    FILEOPS_E_NULLPOINTER,
+    FILEOPS_NULLPOINTER,
  /* handling files */
-    FILEOPS_E_OPEN_READING,
-    FILEOPS_E_OPEN_WRITING,
-    FILEOPS_E_IOERROR,
+    FILEOPS_CANNOT_OPEN_READING,
+    FILEOPS_CANNOT_OPEN_WRITING,
+    FILEOPS_IOERROR,
+    FILEOPS_INCOMPLETE_WRITE,
  /* buffer related */
-    FILEOPS_E_ALLOC_FAIL,
-    FILEOPS_E_READ_ZERO_BYTES,
+    FILEOPS_ALLOCATION_FAIL,
+    FILEOPS_READ_ZERO_BYTES,
 };
+
+/* constants */
+#define FILEOPS_CHUNKSIZE 1024  /* how much to read at once before putting it into buffer struct */
 
 /* load and save files to/from buffer */
 int loadfile (const char *file, struct buffer **filebuf);
-int savefile (const char *file, void *buf, size_t buf_len);
+int savefile (const char *file, struct buffer  *filebuf);
 
 #endif

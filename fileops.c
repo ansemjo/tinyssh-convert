@@ -80,84 +80,130 @@ int readwrite (enum IO_MODE mode, int fd, void *buf, size_t buf_len)
     return 0;
 }
 
-#define FILEOPS_CHUNKSIZE 1024
-
-int read_to_buffer (int fd, struct buffer *filebuf)
+int io (ssize_t (*rw) (int, void *, size_t), int fd, void *data, size_t datalen, size_t *iolenptr)
 {
-    enum fileops_status e = FILEOPS_FAILURE;
-    unsigned char readbuf[ FILEOPS_CHUNKSIZE ];
-    size_t readlen;
+    size_t iolen = 0;
+    ssize_t iochunk;
 
-    /* setup polling */
+    if (iolenptr != NULL)
+        *iolenptr = 0;
+ 
+    /* set up polling */
     struct pollfd polling;
     polling.fd = fd;
-    polling.events = POLLIN | POLLERR; /* extend if writing too ! */
+    polling.events = POLLERR | rw == read ? POLLIN : POLLOUT;
     
-
-    for (;;) {
-        /* read chunk to local buffer */
-        readlen = read(fd, readbuf, sizeof readbuf);
-
-        if (readlen == 0) { /* EOF */
-            e = FILEOPS_SUCCESS;
-            break;
-        } else if (readlen < 0) { /* ERROR or BLOCKED */
-            if (errno == EINTR) continue;
+    while (datalen > iolen) {
+ 
+        /* read or write next chunk */
+        iochunk = (rw) (fd, ((char *)data) + iolen, datalen - iolen);
+ 
+        /* ERROR or BLOCKED */
+        if (iochunk < 0) {
+            /* interrupted */
+            if (errno == EINTR)
+                continue;
+            /* would be blocked */
 			if (errno == EAGAIN || errno == EWOULDBLOCK) {
 			    poll(&polling, 1, -1);
 				continue;
 			}
-            e = FILEOPS_E_IOERROR;
+            /* other error */
+            return FILEOPS_IOERROR;
+        
+        /* some data was processed */
+        } else if (iochunk > 0) {
+            iolen += (size_t)iochunk;
+            continue;
+
+        /* probably EOF */
+        } else if (iochunk == 0) {
             break;
         }
-
-        /* put into buffer */
-        if ((e = buffer_put(filebuf, readlen, readbuf)) != 0)
-            break;
+    
     }
 
-    memzero(readbuf, sizeof readbuf);
-    if (e != FILEOPS_SUCCESS) resetbuffer(filebuf);
-    return e;
+    *iolenptr = iolen;
+    return FILEOPS_SUCCESS;
 }
 
 
 /* load a file to buffer */
 int loadfile (const char *file, struct buffer **filebuf)
 {
-    enum fileops_status e = FILEOPS_FAILURE;
+    int e = FILEOPS_FAILURE;
     int fd;
 
+    /* check for nullpointers and reset filebuf */
     if (filebuf == NULL || file == NULL)
-        return FILEOPS_E_NULLPOINTER;
+        return FILEOPS_NULLPOINTER;
     *filebuf = NULL;
     
-    /* open for reading */
+    /* open file for reading */
     if ((fd = openfile(READ, file)) == -1)
-        return FILEOPS_E_OPEN_READING;
+        return FILEOPS_CANNOT_OPEN_READING;
 
-    /* create a new buffer */ 
+    /* allocate a new buffer */ 
     if ((*filebuf = newbuffer()) == NULL)
-        return FILEOPS_E_ALLOC_FAIL;
+        return FILEOPS_ALLOCATION_FAIL;
 
-    /* read file */
-    e = read_to_buffer(fd, *filebuf);
+    /* create a small fixed-size buffer */
+    unsigned char readbuf[ FILEOPS_CHUNKSIZE ];
+    size_t readlen;
+    
+    /* read file in chunks */
+    for (;;) {
+        /* read chunk to local buffer */
+        e = io (read, fd, readbuf, sizeof readbuf, &readlen);
+
+        /* if error or EOF */
+        if (e != FILEOPS_SUCCESS || readlen == 0)
+            break;
+
+        /* put local into buffer */
+        if ((e = buffer_put(*filebuf, readlen, readbuf)) != BUFFER_SUCCESS)
+            break;
+    }
+
+    /* cleanup */
+    memzero(readbuf, sizeof readbuf);
+    if (e != FILEOPS_SUCCESS) resetbuffer(*filebuf);
     close(fd);
     return e;
 }
 
 /* save a buffer to file */
-int savefile (const char *file, void *buf, size_t buf_len)
+int savefile (const char *file, struct buffer *filebuf)
 {
-    int fd, ret;
+    int e = FILEOPS_FAILURE;
+    int fd;
+
+    /* check for nullpointers */
+    if (filebuf == NULL || file == NULL)
+        return FILEOPS_NULLPOINTER;
     
     /* open for writing */
-    fd = openfile(WRITE, file);
-    if (fd == -1) fatal(ERR_IO_READ_FAIL, NULL);
+    if ((fd = openfile(WRITE, file)) == -1)
+        return FILEOPS_CANNOT_OPEN_WRITING;
 
-    /* write buffer to file and fsync */
-    if ((ret = readwrite(WRITE, fd, buf, buf_len)) != -1)
-        fsync(fd);
+    /* get pointer to and size of data to write */
+    size_t writelen;
+    unsigned char *dataptr = buffer_dataptr(filebuf);
+    size_t length = buffer_length(filebuf);
+
+    /* try to write contents of buffer to file */
+    ssize_t (*_write) (int, void *, size_t) = (ssize_t (*) (int, void *, size_t)) write;
+    e = io (_write, fd, dataptr, length, &writelen);
+    
+    /* catch errors */
+    if (e != FILEOPS_SUCCESS || writelen != length) {
+        close(fd);
+        unlink(file);
+        return FILEOPS_INCOMPLETE_WRITE;
+    }
+    
+    /* if successful, fsync and close */
+    fsync(fd);
     close(fd);
-    return ret;
+    return e;
 }

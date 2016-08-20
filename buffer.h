@@ -18,9 +18,9 @@ static void * (* const volatile volatile_memset)(void *,  int, size_t) = memset;
 
 
 /* size constraints */
-#define BUFFER_ALLOCATION_INITIAL                256  /*   256 B */
-#define BUFFER_ALLOCATION_INCREMENT              256  /*   256 B */
-#define BUFFER_ALLOCATION_MAXIMUM       64*1024*1024  /*   64 MB */
+#define BUFFER_ALLOCATION_INITIAL                512  /*   512 B */
+#define BUFFER_ALLOCATION_INCREMENT             2048  /*   2 KiB */
+#define BUFFER_ALLOCATION_MAXIMUM       64*1024*1024  /*  64 MiB */
 
 /* status codes */
 enum buffer_status {

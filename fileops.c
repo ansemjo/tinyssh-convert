@@ -109,8 +109,8 @@ int savefile (const char *file, struct buffer *filebuf)
 
     /* get pointer to and size of data to write */
     size_t writelen;
-    unsigned char *dataptr = buffer_dataptr(filebuf);
-    size_t length = buffer_length(filebuf);
+    unsigned char *dataptr = buffer_get_dataptr(filebuf);
+    size_t length = buffer_get_size(filebuf);
 
     /* try to write contents of buffer to file */
     e = io (iowrite, fd, dataptr, length, &writelen);

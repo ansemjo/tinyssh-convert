@@ -43,14 +43,16 @@ struct buffer * newbuffer   ();
            void resetbuffer (struct buffer *buf);
 
 /* handle data in buffer */
-            int buffer_reserve  (struct buffer *buf, size_t request_size, unsigned char **request_ptr);
-            int buffer_put      (struct buffer *buf, size_t datalength, const void *data);
+int buffer_reserve  (struct buffer *buf, size_t request_size, unsigned char **request_ptr);
+int buffer_put      (struct buffer *buf, size_t datalength, const void *data);
+
+/* getters */
+unsigned char * buffer_get_dataptr    (struct buffer *buf);
+unsigned char * buffer_get_offsetptr  (struct buffer *buf);
+         size_t buffer_get_size       (struct buffer *buf);
+         size_t buffer_get_allocation (struct buffer *buf);
 
 /* debugging */
-unsigned char * buffer_dataptr    (struct buffer *buf);
-         size_t buffer_length     (struct buffer *buf);
-         size_t buffer_offset     (struct buffer *buf);
-         size_t buffer_allocation (struct buffer *buf);
-           void buffer_dump       (struct buffer *buf);
+void buffer_dump (struct buffer *buf);
 
 #endif

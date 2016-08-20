@@ -164,21 +164,43 @@ int buffer_put (struct buffer *buf, size_t datalength, const void *data)
     return BUFFER_SUCCESS;
 }
 
+
+/* +----------------------+ */
+/* | get pieces of struct | */
+/* +----------------------+ */
+
+unsigned char *buffer_get_dataptr (struct buffer *buf)
+{
+    if (buf != NULL)
+        return buf->data;
+    return NULL;
+}
+
+unsigned char *buffer_get_offsetptr (struct buffer *buf) {
+    if (buf != NULL)
+        return buf->data + buf->offset;
+    return NULL;
+}
+
+size_t buffer_get_size (struct buffer *buf)
+{
+    if (buf != NULL)
+        return buf->size;
+    return 0;
+}
+
+size_t buffer_get_allocation (struct buffer *buf)
+{
+    if (buf != NULL)
+        return buf->allocation;
+    return 0;
+}
+
+
 /* +-----------+ */
 /* | debugging | */
 /* +-----------+ */
 
-unsigned char *buffer_dataptr (struct buffer *buf) {
-    if (buf != NULL) return buf->data; else return NULL; }
-
-size_t buffer_length (struct buffer *buf) {
-    if (buf != NULL) return buf->size; else return 0; }
-
-size_t buffer_offset (struct buffer *buf) {
-    if (buf != NULL) return buf->offset; else return 0; }
-
-size_t buffer_allocation (struct buffer *buf) {
-    if (buf != NULL) return buf->allocation; else return 0; }
 
 void buffer_dump (struct buffer *buf) {
     if (buf != NULL) debugbuf("STRUCT", (unsigned char *)buf, sizeof(struct buffer));

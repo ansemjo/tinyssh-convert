@@ -182,4 +182,10 @@ size_t buffer_allocation (struct buffer *buf) {
 
 void buffer_dump (struct buffer *buf) {
     if (buf != NULL) debugbuf("STRUCT", (unsigned char *)buf, sizeof(struct buffer));
-    if (buf->data != NULL) debugbuf("BUFFER DATA", buf->data, buf->allocation); }
+    #include <stdio.h> /* TODO some these function shall be removed sometime */ 
+    printf("%s%p\n%s%lu bytes\n%s%lu bytes\n%s+%lu = %p\n",
+            "data address:   ", buf->data,
+            "allocation:     ", buf->allocation,
+            "data length:    ", buf->size,
+            "offset:         ", buf->offset, buf->data + buf->offset);
+    if (buf->data != NULL) debugbuf("BUFFER DATA", buf->data, buf->size); }

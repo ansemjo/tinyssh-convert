@@ -23,11 +23,21 @@ enum fileops_status {
     FILEOPS_INCOMPLETE_WRITE,
  /* buffer related */
     FILEOPS_ALLOCATION_FAIL,
-    FILEOPS_READ_ZERO_BYTES,
 };
 
-/* constants */
-#define FILEOPS_CHUNKSIZE 1024  /* how much to read at once before putting it into buffer struct */
+/* chunk at once before putting it into buffer struct */
+#define FILEOPS_CHUNKSIZE 1024
+
+/* open file descriptors */
+#define openwriting(file) open(file, O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0644)
+#define openreading(file) open(file, O_RDONLY | O_CLOEXEC)
+
+/* functions passable to io function */
+#define iowrite (ssize_t (*) (int, void *, size_t))write
+#define ioread  read
+
+/* lowlevel io */
+int io (ssize_t (*rw) (int, void *, size_t), int fd, void *data, size_t datalen, size_t *iolenptr);
 
 /* load and save files to/from buffer */
 int loadfile (const char *file, struct buffer **filebuf);

@@ -50,11 +50,14 @@ struct buffer * newbuffer   ();
            void resetbuffer (struct buffer *buf);
 
 /* put data into buffer */
-int buffer_reserve  (struct buffer *buf, size_t request_size, unsigned char **request_ptr);
-int buffer_put      (struct buffer *buf, size_t datalength, const void *data);
-int buffer_put_u32  (struct buffer *buf, unsigned long value);
-int buffer_put_u8   (struct buffer *buf, unsigned char value);
-#define buffer_put_char buffer_put_u8
+int buffer_reserve      (struct buffer *buf, size_t request_size, unsigned char **request_ptr);
+int buffer_put          (struct buffer *buf, size_t datalength, const void *data);
+int buffer_put_u32      (struct buffer *buf, unsigned long value);
+int buffer_put_u8       (struct buffer *buf, unsigned char value);
+ #define buffer_put_char buffer_put_u8
+
+/* convert from other formats */
+int buffer_put_decoded_base64 (struct buffer *buf, const char *base64string);
 
 /* read data from buffer */
 int buffer_add_offset    (struct buffer *buf, size_t length);
@@ -63,8 +66,9 @@ int buffer_read_u8       (struct buffer *buf, unsigned char *read);
 int buffer_get_stringptr (const struct buffer *buf, const unsigned char **stringptr, size_t *stringlen);
 int buffer_read_string   (struct buffer *buf, unsigned char **stringptr, size_t *lengthptr, char *nullchar);
 
-/* convert from other formats */
-int buffer_decode_from_base64 (struct buffer *buf, const char *base64string);
+/* create new from some other data */
+int buffer_new_from_string (struct buffer **buf, const char *string, size_t strlen);
+int buffer_new_from_buffer (struct buffer **buf, const struct buffer *sourcebuf);
 
 /* attribute getters */
 unsigned char * buffer_get_dataptr      (const struct buffer *buf);

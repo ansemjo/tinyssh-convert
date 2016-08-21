@@ -244,8 +244,9 @@ static int sshkey_parse_private2 (
 	    key + keylen, ivlen, 0)) != 0) goto out;
 
     /* perform decryption of 'decoded' into 'dp' */
-	if ((r = cipher_crypt(ciphercontext, 0, dp, sshbuf_ptr(decoded),
-	    encrypted_len, 0, authlen)) != 0) {
+                                         /* dest      src                len      aadlen  authlen */
+                                         /* for no cipher this degrades to a simple memcpy */
+	if ((r = cipher_crypt(ciphercontext, 0, dp, sshbuf_ptr(decoded), encrypted_len, 0, authlen)) != 0) {
 		/* an integrity error here indicates an incorrect passphrase */
 		if (r == SSH_ERR_MAC_INVALID) r = SSH_ERR_KEY_WRONG_PASSPHRASE;
 		goto out;

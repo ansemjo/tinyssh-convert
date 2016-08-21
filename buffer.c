@@ -119,6 +119,7 @@ int buffer_reserve (struct buffer *buf, size_t request_size, unsigned char **req
 
     /* calculate next largest increment of the needed new size */
     needed_size = roundup(request_size + buf->size, BUFFER_ALLOCATION_INCREMENT);
+    /* TODO implement 'packing', i.e. remove the offset data */
 
     /* is this a reasonable request? */
     if (needed_size > BUFFER_ALLOCATION_MAXIMUM)
@@ -194,7 +195,35 @@ int buffer_put_u8 (struct buffer *buf, unsigned char value)
     return BUFFER_SUCCESS;
 }
 
+/* decode a base64 string and put it into an existing buffer */
+int buffer_put_decoded_base64 (struct buffer *buf, const char *base64string)
+{
+    int e = BUFFER_FAILURE;
+    
+    unsigned char *decoded;
+    size_t encoded_len = strlen(base64string);
+    size_t decoded_len;
 
+    if (encoded_len == 0)
+        return BUFFER_SUCCESS;
+
+    /* allocate memory for decoded string */
+    if ((decoded = malloc(encoded_len)) == NULL)
+        return BUFFER_MALLOC_FAILED;
+
+    /* try to decode string */
+    if ((decoded_len = base64_decode(base64string, decoded, encoded_len)) < 0) {
+        e = BUFFER_INVALID_FORMAT;
+    } else { /* if successful */
+        /* put decoded string into buffer */
+        e = buffer_put(buf, decoded_len, decoded);
+    }
+
+    memzero(decoded, encoded_len);
+    free(decoded);
+
+    return e;
+}
 
 
 /* +--------------------------+ */
@@ -333,45 +362,42 @@ int buffer_read_string (struct buffer *buf, unsigned char **stringptr, size_t *l
 
 
 /* +---------------------------+ */
-/* | decode from other formats | */
+/* | create from other formats | */
 /* +---------------------------+ */
 
-int buffer_decode_from_base64 (struct buffer *buf, const char *base64string)
+/* create a new buffer from a given string */
+int buffer_new_from_string (struct buffer **buf, const char *string, size_t strlen)
 {
-    int e = BUFFER_FAILURE;
+    if (buf != NULL)
+        *buf = NULL;
     
-    unsigned char *decoded;
-    size_t encoded_len = strlen(base64string);
-    size_t decoded_len;
+    if (string == NULL)
+        return BUFFER_NULLPOINTER;
+    
+    /* allocate new */
+    if ((*buf = newbuffer()) == NULL)
+        return BUFFER_ALLOCATION_FAILED;
 
-    if (encoded_len == 0)
-        return BUFFER_SUCCESS;
-
-    /* allocate memory for decoded string */
-    if ((decoded = malloc(encoded_len)) == NULL)
-        return BUFFER_MALLOC_FAILED;
-
-    /* try to decode string */
-    if ((decoded_len = base64_decode(base64string, decoded, encoded_len)) < 0) {
-        e = BUFFER_INVALID_FORMAT;
-        goto cleanup;
-    }
-
-    /* put decoded string into buffer */
-    e = buffer_put(buf, decoded_len, decoded);
-
-    cleanup:
-        memzero(decoded, encoded_len);
-        free(decoded);
-
-    return e;
+    return buffer_put(*buf, strlen, string);    
 }
 
+/* create a new buffer from the remaining data in a given buffer */
+int buffer_new_from_buffer (struct buffer **buf, const struct buffer *sourcebuf)
+{
+    if (buf != NULL)
+        *buf = NULL;
+
+    if (sourcebuf == NULL)
+        return BUFFER_NULLPOINTER;
+    
+    return buffer_new_from_string(buf, buffer_get_offsetptr(sourcebuf), buffer_get_remaining(sourcebuf));
+}
 
 /* +-----------------------+ */
 /* | get info about struct | */
 /* +-----------------------+ */
 
+/* returns pointer to beginning of data */
 unsigned char *buffer_get_dataptr (const struct buffer *buf)
 {
     if (buf != NULL)
@@ -379,12 +405,14 @@ unsigned char *buffer_get_dataptr (const struct buffer *buf)
     return NULL;
 }
 
+/* returns pointer to beginning of offset data */
 unsigned char *buffer_get_offsetptr (const struct buffer *buf) {
     if (buf != NULL)
         return buf->data + buf->offset;
     return NULL;
 }
 
+/* return total size of present data */
 size_t buffer_get_datasize (const struct buffer *buf)
 {
     if (buf != NULL)
@@ -392,6 +420,7 @@ size_t buffer_get_datasize (const struct buffer *buf)
     return 0;
 }
 
+/* returns currently allocated mem */
 size_t buffer_get_allocation (const struct buffer *buf)
 {
     if (buf != NULL)
@@ -399,6 +428,7 @@ size_t buffer_get_allocation (const struct buffer *buf)
     return 0;
 }
 
+/* returns remaining unread / unprocessed data */
 size_t buffer_get_remaining (const struct buffer *buf)
 {
     if (buf != NULL)

@@ -10,19 +10,17 @@
 int openssh_key_v1_parse (struct buffer *filebuf)
 {
     int e = OPENSSH_KEY_FAILURE;
-
+    struct buffer *encoded = NULL, *decoded = NULL, *privatekeyblob = NULL;
+    
     /* allocate temporary buffers for decoding */
-    struct buffer *encoded = NULL, *decoded = NULL;
     if ((encoded = newbuffer()) == NULL || (decoded = newbuffer()) == NULL)
         early_exit(BUFFER_ALLOCATION_FAILED);
 
     printf("buffers allocated ..\n");
 
     /* check the existence of starting mark (aka. preamble) */
-    const unsigned char *rawptr;
-    size_t rawlen;
-    rawptr = buffer_get_dataptr(filebuf);
-    rawlen = buffer_get_remaining(filebuf);
+    const unsigned char *rawptr = buffer_get_dataptr(filebuf);
+                  size_t rawlen = buffer_get_remaining(filebuf);
 
     printf("checking preamble: %.*s\n", OPENSSH_KEY_V1_MARK_BEGIN_LEN - 1, rawptr);
 
@@ -74,7 +72,7 @@ int openssh_key_v1_parse (struct buffer *filebuf)
     printf("\ndecode the buffer from base64 ..\n");
 
     /* base64 decode the buffer */
-    if ((e = buffer_decode_from_base64(decoded, (char *)buffer_get_dataptr(encoded))) != BUFFER_SUCCESS)
+    if ((e = buffer_put_decoded_base64(decoded, (char *)buffer_get_dataptr(encoded)) ) != BUFFER_SUCCESS)
         early_exit(e);
 
     /* DEBUG dump the decoded buffer */
@@ -93,46 +91,83 @@ int openssh_key_v1_parse (struct buffer *filebuf)
      *  begin parsing of the actual key format.
      *  see header for details of format.
      */
-    unsigned char *debugstring;
-    unsigned long debugint;
+
+    unsigned char *ciphername, *kdfname;
+    unsigned long nkeys, privatelen;
     
-    /* cipher name */
-    if ((e = buffer_read_string(decoded, &debugstring, NULL, '\0')) != BUFFER_SUCCESS)
-        early_exit(e);
-    printf("read CIPHER NAME:  %s\n", debugstring);
-
-    if ((e = buffer_read_string(decoded, &debugstring, NULL, '\0')) != BUFFER_SUCCESS)
-        early_exit(e);
-    printf("read KDF NAME:     %s\n", debugstring);
-
-    if ((e = buffer_read_string(decoded, &debugstring, NULL, NULL)) != BUFFER_SUCCESS)
-        early_exit(e);
-    printf("read KDF OPTIONS:  %s\n", debugstring);
-
-    if ((e = buffer_read_u32(decoded, &debugint)) != BUFFER_SUCCESS)
-        early_exit(e);
-    printf("read N. OF KEYS:   %d\n", debugint);
-
-    unsigned char *pubkey;
-    size_t pubkeylen;
-    if ((e = buffer_read_string(decoded, &pubkey, &pubkeylen, NULL)) != BUFFER_SUCCESS)
-        early_exit(e);
-    debugbuf("PUBLIC KEY", pubkey, pubkeylen);
-
-    if ((e = buffer_read_u32(decoded, &debugint)) != BUFFER_SUCCESS)
-        early_exit(e);
-    printf("length of encrypted blob: %d bytes\n", debugint);
+    if (/*   reading function     buffer   target        len   nullchar   expected status */
+        
+        /* cipher name */
+        (e = buffer_read_string ( decoded, &ciphername,  NULL, '\0' )) != BUFFER_SUCCESS ||
+        /* kdf name */
+        (e = buffer_read_string ( decoded, &kdfname,     NULL, '\0' )) != BUFFER_SUCCESS ||
+        /* skip kdf options */
+        (e = buffer_read_string ( decoded, NULL,         NULL, NULL )) != BUFFER_SUCCESS ||
+        /* number of keys */
+        (e = buffer_read_u32    ( decoded, &nkeys                   )) != BUFFER_SUCCESS ||
+        /* skip public key */
+        (e = buffer_read_string ( decoded, NULL,         NULL, NULL )) != BUFFER_SUCCESS ||
+        /* privatekey blob length */
+        (e = buffer_read_u32    ( decoded, &privatelen              )) != BUFFER_SUCCESS
+    
+    ) early_exit(e);
 
     buffer_dump(decoded);
+    printf( "I've got these values:\n"
+            " ciphername:  %s\n"
+            " kdf name:    %s\n"
+            " no of keys:  %lu\n"
+            " private len: %lu\n",
+            ciphername, kdfname, nkeys, privatelen);
 
+    /* don't support encryption yet, cipher and kdf need to be 'none' */
+    if (strncmp(ciphername, "none", 4) != 0)
+        early_exit(OPENSSH_KEY_UNSUPPORTED_CIPHER);
+    if (strncmp(kdfname, "none", 4) != 0)
+        early_exit(OPENSSH_KEY_UNSUPPORTED_KDF);
+
+    /* need exactly one key */
+    if (nkeys != 1)
+        early_exit(OPENSSH_KEY_UNSUPPORTED_MULTIPLEKEYS);
+
+    /* privatekey length must correspond to blocksize and remaining buffer */
+    if ( privatelen < OPENSSH_KEY_NOCIPHER_BLOCKSIZE       ||
+        (privatelen % OPENSSH_KEY_NOCIPHER_BLOCKSIZE) != 0 ||
+        buffer_get_remaining(decoded) != privatelen )
+            early_exit(OPENSSH_KEY_INVALID_PRIVATE_FORMAT);
     
+    /*
+     *  usually, decryption would need to be performed at this point.
+     *  since I assume most hostkeys will be unencrypted anyway this
+     *  is not supported here. openssh's decryption with no cipher
+     *  degrades to a simple memcpy into a new buffer.
+     */
+    if ((e = buffer_new_from_buffer(&privatekeyblob, decoded)) != BUFFER_SUCCESS)
+        early_exit(BUFFER_ALLOCATION_FAILED);
 
+    /* verify that both checkint fields hold the same value */
+    unsigned long check1, check2;
+    if ((e = buffer_read_u32(privatekeyblob, &check1)) != BUFFER_SUCCESS ||
+        (e = buffer_read_u32(privatekeyblob, &check2)) != BUFFER_SUCCESS)
+            early_exit(e); 
+    if (check1 != check2)
+        early_exit(OPENSSH_KEY_INVALID_PRIVATE_FORMAT);
+
+    /* deserialize key and get comment */
+    openssh_private_deserialize(privatekeyblob, NULL);
 
     /* early exit or regular cleanup */
     cleanup:
         freebuffer(encoded);
         freebuffer(decoded);
+        freebuffer(privatekeyblob);
 
     return e;
+
+}
+
+/* deserialize key from buffer */
+int openssh_private_deserialize (struct buffer *buf, struct opensshkey **keyptr)
+{
 
 }

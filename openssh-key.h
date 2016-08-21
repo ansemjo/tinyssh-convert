@@ -32,15 +32,41 @@
 #define OPENSSH_KEY_V1_MAGICBYTES       "openssh-key-v1"
 #define OPENSSH_KEY_V1_MAGICBYTES_LEN   sizeof(OPENSSH_KEY_V1_MAGICBYTES)
 
+/* sizes for cipher = none */
+#define OPENSSH_KEY_NOCIPHER_BLOCKSIZE  8
+
 /* error codes */
 enum openssh_key_status {
     OPENSSH_KEY_SUCCESS =   0,
     OPENSSH_KEY_FAILURE = -30,
 
     OPENSSH_KEY_INVALID_FORMAT,
+    OPENSSH_KEY_INVALID_PRIVATE_FORMAT,
+    OPENSSH_KEY_UNSUPPORTED_CIPHER,
+    OPENSSH_KEY_UNSUPPORTED_KDF,
+    OPENSSH_KEY_UNSUPPORTED_MULTIPLEKEYS,
 };
+
+/* opaque EC_KEY to make it compile for now .. */
+typedef struct EC_KEY EC_KEY;
+
+/* sshkey struct */
+struct opensshkey {
+	int	 type;
+	
+    /* ecdsa nist curves */
+	int	     ecdsa_nid;	/* NID of curve */
+	EC_KEY  *ecdsa_key;
+
+    /* ed25519 */
+	unsigned char   *ed25519_sk;
+	unsigned char   *ed25519_pk;
+};
+
+
 
 /* decode buffer */
 int openssh_key_v1_parse (struct buffer *filebuf);
+int openssh_private_deserialize (struct buffer *buf, struct opensshkey **keyptr);
 
 #endif

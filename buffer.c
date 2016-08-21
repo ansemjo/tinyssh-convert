@@ -277,7 +277,7 @@ int buffer_get_stringptr (const struct buffer *buf, const unsigned char **string
 }
 
 /* read string and optionally check for continuity in respect to given nullchar */
-int buffer_read_string (struct buffer *buf, char **stringptr, size_t *lengthptr, char *nullchar)
+int buffer_read_string (struct buffer *buf, unsigned char **stringptr, size_t *lengthptr, char *nullchar)
 {
     const unsigned char *string, *nullcharfind;
     size_t length;

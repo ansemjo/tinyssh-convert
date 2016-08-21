@@ -53,9 +53,13 @@ int buffer_put      (struct buffer *buf, size_t datalength, const void *data);
 int buffer_put_u32  (struct buffer *buf, unsigned long value);
 int buffer_put_u8   (struct buffer *buf, unsigned char value);
 
-/* read data from buffer */
+/* read numbers from buffer */
 int buffer_read_u32  (struct buffer *buf, unsigned long *read);
 int buffer_read_u8   (struct buffer *buf, unsigned char *read);
+
+/* read strings from buffer */
+int buffer_get_stringptr (const struct buffer *buf, const unsigned char **stringptr, size_t *stringlen);
+int buffer_read_string   (struct buffer *buf, unsigned char **stringptr, size_t *lengthptr, char *nullchar);
 
 /* attribute getters */
 unsigned char * buffer_get_dataptr      (const struct buffer *buf);

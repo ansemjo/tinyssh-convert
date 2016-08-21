@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "utils.h"
+#include "base64.h"
 
 /* allocate zero-initialised */
 #define zalloc(len) calloc(1,len)
@@ -31,6 +32,7 @@ enum buffer_status {
     BUFFER_INTERNAL_ERROR,
     BUFFER_LENGTH_OVER_MAXIMUM,
     BUFFER_MEMCPY_FAIL,
+    BUFFER_ALLOCATION_FAILED,
     BUFFER_MALLOC_FAILED,
     BUFFER_REALLOC_FAILED,
     BUFFER_MEMCPY_FAILED,
@@ -52,14 +54,17 @@ int buffer_reserve  (struct buffer *buf, size_t request_size, unsigned char **re
 int buffer_put      (struct buffer *buf, size_t datalength, const void *data);
 int buffer_put_u32  (struct buffer *buf, unsigned long value);
 int buffer_put_u8   (struct buffer *buf, unsigned char value);
+#define buffer_put_char buffer_put_u8
 
-/* read numbers from buffer */
-int buffer_read_u32  (struct buffer *buf, unsigned long *read);
-int buffer_read_u8   (struct buffer *buf, unsigned char *read);
-
-/* read strings from buffer */
+/* read data from buffer */
+int buffer_add_offset    (struct buffer *buf, size_t length);
+int buffer_read_u32      (struct buffer *buf, unsigned long *read);
+int buffer_read_u8       (struct buffer *buf, unsigned char *read);
 int buffer_get_stringptr (const struct buffer *buf, const unsigned char **stringptr, size_t *stringlen);
 int buffer_read_string   (struct buffer *buf, unsigned char **stringptr, size_t *lengthptr, char *nullchar);
+
+/* convert from other formats */
+int buffer_decode_from_base64 (struct buffer *buf, const char *base64string);
 
 /* attribute getters */
 unsigned char * buffer_get_dataptr      (const struct buffer *buf);

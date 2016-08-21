@@ -331,6 +331,43 @@ int buffer_read_string (struct buffer *buf, unsigned char **stringptr, size_t *l
     buffer_read_string(buf, strptr, lenptr, '\0') => sshbuf_get_cstring(buf, strptr, lenptr)
 */
 
+
+/* +---------------------------+ */
+/* | decode from other formats | */
+/* +---------------------------+ */
+
+int buffer_decode_from_base64 (struct buffer *buf, const char *base64string)
+{
+    int e = BUFFER_FAILURE;
+    
+    unsigned char *decoded;
+    size_t encoded_len = strlen(base64string);
+    size_t decoded_len;
+
+    if (encoded_len == 0)
+        return BUFFER_SUCCESS;
+
+    /* allocate memory for decoded string */
+    if ((decoded = malloc(encoded_len)) == NULL)
+        return BUFFER_MALLOC_FAILED;
+
+    /* try to decode string */
+    if ((decoded_len = base64_decode(base64string, decoded, encoded_len)) < 0) {
+        e = BUFFER_INVALID_FORMAT;
+        goto cleanup;
+    }
+
+    /* put decoded string into buffer */
+    e = buffer_put(buf, decoded_len, decoded);
+
+    cleanup:
+        memzero(decoded, encoded_len);
+        free(decoded);
+
+    return e;
+}
+
+
 /* +-----------------------+ */
 /* | get info about struct | */
 /* +-----------------------+ */

@@ -91,7 +91,7 @@ static int sshkey_parse_private2 (
 			}
 		}
 	}
-    /* something went horribly wrong here */
+    /* no end marker was found until EOF */
 	if (encoded_len == 0) {
 		r = SSH_ERR_INVALID_FORMAT; goto out; }
 
@@ -613,7 +613,7 @@ int sshbuf_get_cstring(struct sshbuf *buf, char **stringptr, size_t *lengthptr)
 	/* write length */
     if (lengthptr != NULL)
         *lengthptr = (size_t)length;
-        
+
 	return 0;
 }
 

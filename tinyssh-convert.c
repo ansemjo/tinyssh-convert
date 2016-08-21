@@ -38,6 +38,7 @@
 #include "utils.h"
 #include "fileops.h"
 #include "buffer.h"
+#include "openssh-key.h"
 
 /* the secretkey filename */
 char sourcefn[1024];
@@ -87,23 +88,16 @@ int main(int argc, char **argv)
     struct buffer *filebuffer;
     int e;
     if ((e = loadfile(sourcefn, &filebuffer)) != 0)
-        printf("loadfile status: %d", e);
-
-    buffer_put_u8(filebuffer, 0xDE);
-    buffer_put_u8(filebuffer, 0xAD);
-    buffer_put_u8(filebuffer, 0xBE);
-    buffer_put_u8(filebuffer, 0xEF);
-    buffer_put_u32(filebuffer, 0xFF);
+        printf("loadfile error: %d", e);
 
     /* show contents of file */
     buffer_dump(filebuffer);
 
-    /* decode buffer as u_ints */
-    /*
-    unsigned long uint32;
-    for (int i = 0; (buffer_read_u32(filebuffer, &uint32) == BUFFER_SUCCESS); i++)
-        printf("next uint32: %lu\n", uint32);
-    */
+    printf("PARSE FILEBUFFER AS OPENSSH KEY\n");
+    e = openssh_key_v1_parse(filebuffer);
+    if (e != OPENSSH_KEY_SUCCESS)
+        printf("PARSING FAILED WITH ERRORCODE %d\n", e);
+
 
     /* ask for destination */
     /*

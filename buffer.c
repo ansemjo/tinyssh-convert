@@ -147,7 +147,7 @@ int buffer_reserve (struct buffer *buf, size_t request_size, unsigned char **req
 int buffer_put (struct buffer *buf, size_t datalength, const void *data)
 {
     unsigned char *put;
-    enum buffer_status e = BUFFER_FAILURE;
+    int e = BUFFER_FAILURE;
 
     if (data == NULL)
         return BUFFER_E_NULLPOINTER;
@@ -164,10 +164,89 @@ int buffer_put (struct buffer *buf, size_t datalength, const void *data)
     return BUFFER_SUCCESS;
 }
 
+/* put a 32 bit unsigned number */
+int buffer_put_u32 (struct buffer *buf, unsigned long value)
+{
+    int e = BUFFER_FAILURE;
+    unsigned char *valput;
+    
+    /* reserve memory */
+    if ((e = buffer_reserve(buf, 4, &valput)) != BUFFER_SUCCESS)
+        return e;
+    
+    /* write the value to address */
+    encode_uint32(valput, value);
+    return BUFFER_SUCCESS;
+}
 
-/* +----------------------+ */
-/* | get pieces of struct | */
-/* +----------------------+ */
+/* put a 8 bit unsigned char */
+int buffer_put_u8 (struct buffer *buf, unsigned char value)
+{
+    int e = BUFFER_FAILURE;
+    unsigned char *valput;
+    
+    /* reserve memory */
+    if ((e = buffer_reserve(buf, 1, &valput)) != BUFFER_SUCCESS)
+        return e;
+    
+    /* write the value to address */
+    *valput = value;
+    return BUFFER_SUCCESS;
+}
+
+
+
+
+/* +--------------------------+ */
+/* | read content from buffer | */
+/* +--------------------------+ */
+
+int buffer_add_offset (struct buffer *buf, size_t length)
+{
+    if (length > buffer_get_length(buf))
+        return BUFFER_OFFSET_TOO_LARGE;
+    
+    buf->offset += length;
+    return BUFFER_SUCCESS;
+}
+
+/* get a 32 bit unsigned number */
+int buffer_read_u32 (struct buffer *buf, unsigned long *read)
+{
+    int e = BUFFER_FAILURE;
+    unsigned char *tmp = buffer_get_offsetptr(buf);
+
+    /* move offset */
+    if ((e = buffer_add_offset(buf, 4)) != BUFFER_SUCCESS)
+        return e;
+    
+    /* put number */
+    if (read != NULL)
+        *read = decode_uint32(tmp);
+
+    return BUFFER_SUCCESS;
+}
+
+/* get an 8 bit unsigned number/char */
+int buffer_read_u8 (struct buffer *buf, unsigned char *read)
+{
+    int e = BUFFER_FAILURE;
+    unsigned char *tmp = buffer_get_offsetptr(buf);
+
+    /* move offset */
+    if ((e = buffer_add_offset(buf, 1)) != BUFFER_SUCCESS)
+        return e;
+    
+    /* put number */
+    if (read != NULL)
+        *read = (unsigned char)*tmp;
+
+    return BUFFER_SUCCESS;
+}
+
+/* +-----------------------+ */
+/* | get info about struct | */
+/* +-----------------------+ */
 
 unsigned char *buffer_get_dataptr (struct buffer *buf)
 {
@@ -182,7 +261,7 @@ unsigned char *buffer_get_offsetptr (struct buffer *buf) {
     return NULL;
 }
 
-size_t buffer_get_size (struct buffer *buf)
+size_t buffer_get_datasize (struct buffer *buf)
 {
     if (buf != NULL)
         return buf->size;
@@ -193,6 +272,13 @@ size_t buffer_get_allocation (struct buffer *buf)
 {
     if (buf != NULL)
         return buf->allocation;
+    return 0;
+}
+
+size_t buffer_get_length (struct buffer *buf)
+{
+    if (buf != NULL)
+        return buf->size - buf->offset;
     return 0;
 }
 

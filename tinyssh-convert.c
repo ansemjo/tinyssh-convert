@@ -89,16 +89,28 @@ int main(int argc, char **argv)
     if ((e = loadfile(sourcefn, &filebuffer)) != 0)
         printf("loadfile status: %d", e);
 
+    buffer_put_u8(filebuffer, 0xDE);
+    buffer_put_u8(filebuffer, 0xAD);
+    buffer_put_u8(filebuffer, 0xBE);
+    buffer_put_u8(filebuffer, 0xEF);
+    buffer_put_u32(filebuffer, 0xFF);
+
     /* show contents of file */
     buffer_dump(filebuffer);
 
+    unsigned long uint32;
+    for (int i = 0; (buffer_read_u32(filebuffer, &uint32) == BUFFER_SUCCESS); i++)
+        printf("next uint32: %lu\n", uint32);
+
     /* ask for destination */
+    /*
     if (!have_destfn)
         prompt ("Enter a destination filename", destfn, sizeof destfn, "/tmp/nope.txt");
 
     if ((e = savefile(destfn, filebuffer)) != 0)
         printf("savefile status: %d", e);
-    
+    */
+
     freebuffer(filebuffer);
 
     /*

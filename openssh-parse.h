@@ -1,5 +1,5 @@
-#ifndef _headerguard_openssh_key_h_
-#define _headerguard_openssh_key_h_
+#ifndef _headerguard_openssh_parse_h_
+#define _headerguard_openssh_parse_h_
 
 #include "buffer.h"
 

@@ -1,4 +1,4 @@
-#include "openssh-key.h"
+#include "openssh-parse.h"
 
 /* for debugging */
 #include <stdio.h>
@@ -169,5 +169,18 @@ int openssh_key_v1_parse (struct buffer *filebuf)
 /* deserialize key from buffer */
 int openssh_private_deserialize (struct buffer *buf, struct opensshkey **keyptr)
 {
+    int e = OPENSSH_KEY_FAILURE;
+    
+    printf("\n ==== DESERIALIZE KEY ====\n");
+
+    unsigned char *typename = NULL;
+    if ((e = buffer_read_string(buf, &typename, NULL, '\0')) != BUFFER_SUCCESS)
+        early_exit(e);
+
+    printf("typename: %s\n", typename);
+
+    
+    cleanup:
+        printf("cleanup: nothing to do yet.\n");
 
 }

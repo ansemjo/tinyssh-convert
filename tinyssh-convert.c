@@ -38,7 +38,7 @@
 #include "utils.h"
 #include "fileops.h"
 #include "buffer.h"
-#include "openssh-key.h"
+#include "openssh-parse.h"
 
 /* the secretkey filename */
 char sourcefn[1024];

@@ -26,13 +26,17 @@ static void * (* const volatile volatile_memset)(void *,  int, size_t) = memset;
 enum buffer_status {
     BUFFER_SUCCESS = 0,
     BUFFER_FAILURE = 1,
- /* general errors */
-    BUFFER_E_NULLPOINTER,
- /* allocating memory */
-    BUFFER_E_RESERVE_TOO_LARGE,
-    BUFFER_E_MEMCPY_FAIL,
-    BUFFER_E_REALLOC_FAILED,
+ /* errors */
+    BUFFER_NULLPOINTER,
+    BUFFER_INTERNAL_ERROR,
+    BUFFER_LENGTH_OVER_MAXIMUM,
+    BUFFER_MEMCPY_FAIL,
+    BUFFER_MALLOC_FAILED,
+    BUFFER_REALLOC_FAILED,
+    BUFFER_MEMCPY_FAILED,
     BUFFER_OFFSET_TOO_LARGE,
+    BUFFER_INCOMPLETE_MESSAGE,
+    BUFFER_INVALID_FORMAT,
 };
 
 /* opaque struct */
@@ -54,14 +58,14 @@ int buffer_read_u32  (struct buffer *buf, unsigned long *read);
 int buffer_read_u8   (struct buffer *buf, unsigned char *read);
 
 /* attribute getters */
-unsigned char * buffer_get_dataptr    (struct buffer *buf);
-unsigned char * buffer_get_offsetptr  (struct buffer *buf);
-         size_t buffer_get_datasize   (struct buffer *buf);
-         size_t buffer_get_allocation (struct buffer *buf);
-         size_t buffer_get_length     (struct buffer *buf);
+unsigned char * buffer_get_dataptr      (const struct buffer *buf);
+unsigned char * buffer_get_offsetptr    (const struct buffer *buf);
+         size_t buffer_get_datasize     (const struct buffer *buf);
+         size_t buffer_get_allocation   (const struct buffer *buf);
+         size_t buffer_get_remaining    (const struct buffer *buf);
 
 /* debugging */
-void buffer_dump (struct buffer *buf);
+void buffer_dump (const struct buffer *buf);
 
 /* Macros for decoding/encoding integers */
 #define decode_uint32(addr) \

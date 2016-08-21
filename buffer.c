@@ -122,13 +122,13 @@ int buffer_reserve (struct buffer *buf, size_t request_size, unsigned char **req
 
     /* is this a reasonable request? */
     if (needed_size > BUFFER_ALLOCATION_MAXIMUM)
-        return BUFFER_E_RESERVE_TOO_LARGE;
+        return BUFFER_LENGTH_OVER_MAXIMUM;
 
     /* do we need more allocation? */
     if (needed_size > buf->allocation) {
         /* reallocate with more mem */
         if ((newdata = realloc(buf->data, needed_size)) == NULL)
-            return BUFFER_E_REALLOC_FAILED;
+            return BUFFER_REALLOC_FAILED;
         
         /* set new data values in buffer */
         buf->allocation = needed_size;
@@ -150,7 +150,7 @@ int buffer_put (struct buffer *buf, size_t datalength, const void *data)
     int e = BUFFER_FAILURE;
 
     if (data == NULL)
-        return BUFFER_E_NULLPOINTER;
+        return BUFFER_NULLPOINTER;
 
     /* reserve space */
     if ((e = buffer_reserve(buf, datalength, &put)) != BUFFER_SUCCESS)
@@ -158,7 +158,7 @@ int buffer_put (struct buffer *buf, size_t datalength, const void *data)
 
     /* copy data */
     if (memcpy(put, data, datalength) == NULL)
-        return BUFFER_E_MEMCPY_FAIL;
+        return BUFFER_MEMCPY_FAIL;
     
     /* success */
     return BUFFER_SUCCESS;
@@ -203,7 +203,7 @@ int buffer_put_u8 (struct buffer *buf, unsigned char value)
 
 int buffer_add_offset (struct buffer *buf, size_t length)
 {
-    if (length > buffer_get_length(buf))
+    if (length > buffer_get_remaining(buf))
         return BUFFER_OFFSET_TOO_LARGE;
     
     buf->offset += length;
@@ -244,38 +244,125 @@ int buffer_read_u8 (struct buffer *buf, unsigned char *read)
     return BUFFER_SUCCESS;
 }
 
+/* get pointer and length of next string in buffer */
+int buffer_get_stringptr (const struct buffer *buf, const unsigned char **stringptr, size_t *stringlen)
+{
+    unsigned long length;
+    const unsigned char *pointer = buffer_get_offsetptr(buf);
+
+    /* check & clear targets */
+    if (buf == NULL || stringptr == NULL || stringlen == NULL)
+        return BUFFER_NULLPOINTER; 
+    *stringptr = NULL;
+    *stringlen = 0;
+
+    /* check length in buffer */
+    if (buffer_get_remaining(buf) < 4)
+        return BUFFER_INCOMPLETE_MESSAGE;
+
+    /* get length of string */
+    length = decode_uint32(pointer);
+
+    /* check length sanity */
+    if (length > BUFFER_ALLOCATION_MAXIMUM - 4)
+        return BUFFER_LENGTH_OVER_MAXIMUM;
+    if (length > buffer_get_remaining(buf) - 4)
+        return BUFFER_INCOMPLETE_MESSAGE;
+    
+    /* write results */
+    *stringptr = pointer + 4;
+    *stringlen = length;
+
+    return BUFFER_SUCCESS;
+}
+
+/* read string and optionally check for continuity in respect to given nullchar */
+int buffer_read_string (struct buffer *buf, char **stringptr, size_t *lengthptr, char *nullchar)
+{
+    const unsigned char *string, *nullcharfind;
+    size_t length;
+    int e = BUFFER_FAILURE;
+
+    /* reset targets */
+    if (stringptr != NULL) *stringptr = NULL;
+    if (lengthptr != NULL) *lengthptr = 0;
+    
+    /* get pointer and length of string in buffer */
+    if ((e = buffer_get_stringptr(buf, &string, &length)) != BUFFER_SUCCESS)
+        return e;
+    
+    /* if nullchar given, check that it only appears at the end */
+    if (nullchar != NULL) {
+        if ( length > 0 &&
+            (nullcharfind = memchr(string, *nullchar, length)) != NULL &&
+             nullcharfind < string + length - 1)
+                return BUFFER_INVALID_FORMAT;
+    }
+
+    /* advance offset */
+    if (buffer_add_offset(buf, length + 4))
+        return BUFFER_INTERNAL_ERROR;
+    
+    /* allocate new buffer and write string */
+    if (stringptr != NULL) {
+        /* allocate */
+        if ((*stringptr = malloc(length + 1)) == NULL)
+            return BUFFER_MALLOC_FAILED;
+
+        /* copy string */
+        if (length != 0)
+            if (memcpy(*stringptr, string, length) == NULL)
+                return BUFFER_MEMCPY_FAILED;
+
+        /* terminate with nullchar */
+        (*stringptr)[length] = nullchar != NULL ? *nullchar : '\0';
+    }
+
+    /* output length */
+    if (lengthptr != NULL)
+        *lengthptr = length;
+
+    return BUFFER_SUCCESS;
+}
+
+/*
+    Compatability with sshbuf_get_c?string:
+    buffer_read_string(buf, strptr, lenptr, NULL) => sshbuf_get_string(buf, strptr, lenptr)
+    buffer_read_string(buf, strptr, lenptr, '\0') => sshbuf_get_cstring(buf, strptr, lenptr)
+*/
+
 /* +-----------------------+ */
 /* | get info about struct | */
 /* +-----------------------+ */
 
-unsigned char *buffer_get_dataptr (struct buffer *buf)
+unsigned char *buffer_get_dataptr (const struct buffer *buf)
 {
     if (buf != NULL)
         return buf->data;
     return NULL;
 }
 
-unsigned char *buffer_get_offsetptr (struct buffer *buf) {
+unsigned char *buffer_get_offsetptr (const struct buffer *buf) {
     if (buf != NULL)
         return buf->data + buf->offset;
     return NULL;
 }
 
-size_t buffer_get_datasize (struct buffer *buf)
+size_t buffer_get_datasize (const struct buffer *buf)
 {
     if (buf != NULL)
         return buf->size;
     return 0;
 }
 
-size_t buffer_get_allocation (struct buffer *buf)
+size_t buffer_get_allocation (const struct buffer *buf)
 {
     if (buf != NULL)
         return buf->allocation;
     return 0;
 }
 
-size_t buffer_get_length (struct buffer *buf)
+size_t buffer_get_remaining (const struct buffer *buf)
 {
     if (buf != NULL)
         return buf->size - buf->offset;
@@ -288,7 +375,7 @@ size_t buffer_get_length (struct buffer *buf)
 /* +-----------+ */
 
 
-void buffer_dump (struct buffer *buf) {
+void buffer_dump (const struct buffer *buf) {
     if (buf != NULL) debugbuf("STRUCT", (unsigned char *)buf, sizeof(struct buffer));
     #include <stdio.h> /* TODO some these function shall be removed sometime */ 
     printf("%s%p\n%s%lu bytes\n%s%lu bytes\n%s+%lu = %p\n",

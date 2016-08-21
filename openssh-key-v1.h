@@ -470,34 +470,6 @@ int sshbuf_get_u8(struct sshbuf *buf, u_char *valp)
 	return 0;
 }
 
-/* get string by allocating new at *valp and no checking for \0 term */
-int sshbuf_get_string (struct sshbuf *buf, u_char **valp, size_t *lenp)
-{
-	const u_char *val;
-	size_t len;
-	int r;
-
-    /* reset */
-	if (valp != NULL) *valp = NULL;
-	if (lenp != NULL) *lenp = 0;
-
-    /* get address + length of string and advance offset */
-	if ((r = sshbuf_get_string_direct(buf, &val, &len)) < 0) return r;
-	
-    if (valp != NULL) {
-        /* allocate mem */
-		if ((*valp = malloc(len + 1)) == NULL) {
-			SSHBUF_DBG(("SSH_ERR_ALLOC_FAIL"));
-			return SSH_ERR_ALLOC_FAIL;
-		}
-        /* copy string */
-		if (len != 0) memcpy(*valp, val, len);
-		(*valp)[len] = '\0';
-	}
-
-	if (lenp != NULL) *lenp = len;
-	return 0;
-}
 
 /* don't actually copy anything, just output the address + len and advance offset */
 int sshbuf_get_string_direct(struct sshbuf *buf, const u_char **stringstart_ptr, size_t *stringlength_ptr)
@@ -527,15 +499,17 @@ int sshbuf_get_string_direct(struct sshbuf *buf, const u_char **stringstart_ptr,
 	return 0;
 }
 
+
+
 /* read length of next string from next 4 bytes of buffer; no copying or offsetting */
-int sshbuf_peek_string_direct(const struct sshbuf *buf, const u_char **stringstart_ptr, size_t *length_out_ptr)
+int sshbuf_peek_string_direct(const struct sshbuf *buf, const u_char **stringstart_ptr, size_t *lengthptr)
 {
 	u_int32_t len;
 	const u_char *pointer = sshbuf_ptr(buf);
 
     /* reset targets */
 	if (stringstart_ptr != NULL) *stringstart_ptr = NULL;
-	if (length_out_ptr != NULL) *length_out_ptr = 0;
+	if (lengthptr != NULL) *lengthptr = 0;
 	
     /* buffer length under 4 */
     if (sshbuf_len(buf) < 4) {
@@ -558,45 +532,88 @@ int sshbuf_peek_string_direct(const struct sshbuf *buf, const u_char **stringsta
 
     /* write start addr and length */
 	if (stringstart_ptr != NULL) *stringstart_ptr = pointer + 4;
-	if (length_out_ptr != NULL) *length_out_ptr = len;
+	if (lengthptr != NULL) *lengthptr = len;
+	
+    return 0;
+}
+
+/* get string by allocating new at *stringptr and no checking for \0 term */
+int sshbuf_get_string (struct sshbuf *buf, u_char **stringptr, size_t *lengthptr)
+{
+	const u_char *string;
+	size_t length;
+	int r;
+
+    /* reset */
+	if (stringptr != NULL) *stringptr = NULL;
+	if (lengthptr != NULL) *lengthptr = 0;
+
+    /* get address + length of string and advance offset */
+	if ((r = sshbuf_get_string_direct(buf, &string, &length)) < 0) return r;
+	
+    /* copy string */
+    if (stringptr != NULL) {
+        /* allocate mem */
+		if ((*stringptr = malloc(length + 1)) == NULL)
+			return SSH_ERR_ALLOC_FAIL;
+
+        /* write string */
+		if (length != 0)
+            memcpy(*stringptr, string, length);
+		
+        /* terminate with nullchar */
+		(*stringptr)[length] = '\0';
+	}
+
+    /* write length */
+	if (lengthptr != NULL)
+        *lengthptr = length;
 	
     return 0;
 }
 
 /* get next string in buffer */
-int sshbuf_get_cstring(struct sshbuf *buf, char **target_ptr, size_t *length_out_ptr)
+int sshbuf_get_cstring(struct sshbuf *buf, char **stringptr, size_t *lengthptr)
                       /* decoded           ciphername ..       NULL  */ 
 {
-	size_t strlen;
-	const u_char *p, *z;
+	const u_char *string, *nullchar;
+    size_t length;
 	int r;
 
     /* resetting targets */
-	if (target_ptr != NULL) *target_ptr = NULL;
-	if (length_out_ptr != NULL) *length_out_ptr = 0;
+	if (stringptr != NULL) *stringptr = NULL;
+	if (lengthptr != NULL) *lengthptr = 0;
 
     /* get startaddr + length of next blob */
-	if ((r = sshbuf_peek_string_direct(buf, &p, &strlen)) != 0) return r;
+	if ((r = sshbuf_peek_string_direct(buf, &string, &length)) != 0) return r;
 	
     /* Allow a \0 only at the end of the string */
-	if (strlen > 0 && (z = memchr(p , '\0', strlen)) != NULL && z < p + strlen - 1) {
+	if (length > 0 && (nullchar = memchr(string , '\0', length)) != NULL &&
+        nullchar < string + length - 1) {
 		SSHBUF_DBG(("SSH_ERR_INVALID_FORMAT"));	return SSH_ERR_INVALID_FORMAT; }
 	
     /* skips over the next string (the one we 'found' above) */
     if ((r = sshbuf_skip_string(buf)) != 0)	return -1;
         /* = sshbuf_get_string_direct(buf, NULL, NULL) */
 	
-    /* if target pointer given */
-    if (target_ptr != NULL) {
-        /* allocate some new mem there */
-		if ((*target_ptr = malloc(strlen + 1)) == NULL) {
-			SSHBUF_DBG(("SSH_ERR_ALLOC_FAIL"));	return SSH_ERR_ALLOC_FAIL; }
-        /* .. and copy found string there */
-		if (strlen != 0) memcpy(*target_ptr, p, strlen);
-		(*target_ptr)[strlen] = '\0'; /* terminate with nullchar */
+    /* copy string */
+    if (stringptr != NULL) {
+        /* allocate mem */
+		if ((*stringptr = malloc(length + 1)) == NULL)
+            return SSH_ERR_ALLOC_FAIL;
+        
+        /* write string */
+		if (length != 0)
+            memcpy(*stringptr, string, length);
+
+        /* terminate with nullchar */
+		(*stringptr)[length] = '\0';
 	}
-	/* if length pointer given copy found length there */
-    if (length_out_ptr != NULL) *length_out_ptr = (size_t)strlen;
+
+	/* write length */
+    if (lengthptr != NULL)
+        *lengthptr = (size_t)length;
+        
 	return 0;
 }
 

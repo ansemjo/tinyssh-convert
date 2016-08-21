@@ -98,9 +98,12 @@ int main(int argc, char **argv)
     /* show contents of file */
     buffer_dump(filebuffer);
 
+    /* decode buffer as u_ints */
+    /*
     unsigned long uint32;
     for (int i = 0; (buffer_read_u32(filebuffer, &uint32) == BUFFER_SUCCESS); i++)
         printf("next uint32: %lu\n", uint32);
+    */
 
     /* ask for destination */
     /*

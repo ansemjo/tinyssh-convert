@@ -9,7 +9,7 @@
 /* parse key from a openssh-key-v1 formatted filebuffer */
 int openssh_key_v1_parse (struct buffer *filebuf)
 {
-    int e = OPENSSH_KEY_FAILURE;
+    int e = OPENSSH_PARSE_FAILURE;
     struct buffer *encoded = NULL, *decoded = NULL, *privatekeyblob = NULL;
     
     /* allocate temporary buffers for decoding */
@@ -27,7 +27,7 @@ int openssh_key_v1_parse (struct buffer *filebuf)
     /* length greater than MARKs and preamble matches */
     if (rawlen < (OPENSSH_KEY_V1_MARK_BEGIN_LEN + OPENSSH_KEY_V1_MARK_END_LEN) ||
         memcmp(rawptr, OPENSSH_KEY_V1_MARK_BEGIN, OPENSSH_KEY_V1_MARK_BEGIN_LEN) != 0)
-            return OPENSSH_KEY_INVALID_FORMAT;
+            return OPENSSH_PARSE_INVALID_FORMAT;
 
     printf("preamble OK\n");
 
@@ -67,7 +67,7 @@ int openssh_key_v1_parse (struct buffer *filebuf)
     }
     /* we may have reached the end without an end marker */
     if (rawlen == 0)
-        early_exit(OPENSSH_KEY_INVALID_FORMAT);
+        early_exit(OPENSSH_PARSE_INVALID_FORMAT);
 
     printf("\ndecode the buffer from base64 ..\n");
 
@@ -85,7 +85,7 @@ int openssh_key_v1_parse (struct buffer *filebuf)
     if (buffer_get_remaining(decoded) < OPENSSH_KEY_V1_MAGICBYTES_LEN ||
         memcmp(buffer_get_dataptr(decoded), OPENSSH_KEY_V1_MAGICBYTES, OPENSSH_KEY_V1_MAGICBYTES_LEN) ||
         buffer_add_offset(decoded, OPENSSH_KEY_V1_MAGICBYTES_LEN) != BUFFER_SUCCESS)
-            early_exit(OPENSSH_KEY_INVALID_FORMAT);
+            early_exit(OPENSSH_PARSE_INVALID_FORMAT);
 
     /* 
      *  begin parsing of the actual key format.
@@ -122,19 +122,19 @@ int openssh_key_v1_parse (struct buffer *filebuf)
 
     /* don't support encryption yet, cipher and kdf need to be 'none' */
     if (strncmp(ciphername, "none", 4) != 0)
-        early_exit(OPENSSH_KEY_UNSUPPORTED_CIPHER);
+        early_exit(OPENSSH_PARSE_UNSUPPORTED_CIPHER);
     if (strncmp(kdfname, "none", 4) != 0)
-        early_exit(OPENSSH_KEY_UNSUPPORTED_KDF);
+        early_exit(OPENSSH_PARSE_UNSUPPORTED_KDF);
 
     /* need exactly one key */
     if (nkeys != 1)
-        early_exit(OPENSSH_KEY_UNSUPPORTED_MULTIPLEKEYS);
+        early_exit(OPENSSH_PARSE_UNSUPPORTED_MULTIPLEKEYS);
 
     /* privatekey length must correspond to blocksize and remaining buffer */
-    if ( privatelen < OPENSSH_KEY_NOCIPHER_BLOCKSIZE       ||
-        (privatelen % OPENSSH_KEY_NOCIPHER_BLOCKSIZE) != 0 ||
+    if ( privatelen < OPENSSH_PARSE_NOCIPHER_BLOCKSIZE       ||
+        (privatelen % OPENSSH_PARSE_NOCIPHER_BLOCKSIZE) != 0 ||
         buffer_get_remaining(decoded) != privatelen )
-            early_exit(OPENSSH_KEY_INVALID_PRIVATE_FORMAT);
+            early_exit(OPENSSH_PARSE_INVALID_PRIVATE_FORMAT);
     
     /*
      *  usually, decryption would need to be performed at this point.
@@ -151,10 +151,10 @@ int openssh_key_v1_parse (struct buffer *filebuf)
         (e = buffer_read_u32(privatekeyblob, &check2)) != BUFFER_SUCCESS)
             early_exit(e); 
     if (check1 != check2)
-        early_exit(OPENSSH_KEY_INVALID_PRIVATE_FORMAT);
+        early_exit(OPENSSH_PARSE_INVALID_PRIVATE_FORMAT);
 
     /* deserialize key and get comment */
-    openssh_private_deserialize(privatekeyblob, NULL);
+    openssh_deserialize_private(privatekeyblob, NULL);
 
     /* early exit or regular cleanup */
     cleanup:
@@ -167,20 +167,77 @@ int openssh_key_v1_parse (struct buffer *filebuf)
 }
 
 /* deserialize key from buffer */
-int openssh_private_deserialize (struct buffer *buf, struct opensshkey **keyptr)
+int openssh_deserialize_private (struct buffer *buf, struct opensshkey **keyptr)
 {
-    int e = OPENSSH_KEY_FAILURE;
-    
+    int e = OPENSSH_PARSE_FAILURE;
+    struct opensshkey *newkey;
     printf("\n ==== DESERIALIZE KEY ====\n");
 
-    unsigned char *typename = NULL;
-    if ((e = buffer_read_string(buf, &typename, NULL, '\0')) != BUFFER_SUCCESS)
+    if (keyptr != NULL)
+        *keyptr = NULL;
+
+    /* detect key type */
+    int keytype;
+    unsigned char *keytypename = NULL; 
+    if ((e = buffer_read_string(buf, &keytypename, NULL, '\0')) != BUFFER_SUCCESS)
         early_exit(e);
-
-    printf("typename: %s\n", typename);
-
+    keytype = opensshkey_detect_type (keytypename);
     
-    cleanup:
-        printf("cleanup: nothing to do yet.\n");
+    /* temporary key properties */
+    unsigned char *ed25519_pk = NULL, *ed25519_sk = NULL;
+    size_t pk_len = 0, sk_len = 0;
 
+    /* decide on action */
+    switch (keytype) {
+
+        /* ed25519 keys */
+        case KEY_ED25519:
+        case KEY_ED25519_CERT:
+
+            /* allocate new key */
+            if ((newkey = newopensshkey(keytype)) == NULL)
+                early_exit(OPENSSH_PARSE_ALLOCATION_FAILURE);
+
+            /* get public and private key from buffer */
+            if ((e = buffer_read_string(buf, &ed25519_pk, &pk_len, NULL)) != BUFFER_SUCCESS ||
+                (e = buffer_read_string(buf, &ed25519_sk, &sk_len, NULL)) != BUFFER_SUCCESS)
+                    early_exit(e);
+
+            /* check read key lengths */
+            if (pk_len != ED25519_PUBLICKEY_SIZE || sk_len != ED25519_SECRETKEY_SIZE)
+                early_exit(OPENSSH_PARSE_INVALID_FORMAT);
+            
+            /* write correct pointers */
+            opensshkey_set_ed25519_keys(newkey, ed25519_pk, ed25519_sk);
+            ed25519_pk = ed25519_sk = NULL;
+            
+            break;
+
+        /* ecdsa keys currently not supported */
+        case KEY_ECDSA:
+        case KEY_ECDSA_CERT:
+
+        /* rsa, dsa, or otherwise unknown type */
+        case KEY_UNKNOWN:
+        default:
+            early_exit(OPENSSH_PARSE_UNSUPPORTED_KEY_TYPE);
+    }
+
+    /* write pointer to deserialized key */
+    if (keyptr != NULL) {
+        *keyptr = newkey;
+        newkey = NULL;
+    }
+
+    /* success */
+    e = OPENSSH_PARSE_SUCCESS;
+
+    /* housekeeping .. */
+    cleanup:
+        free(keytypename);
+        freeopensshkey(newkey);
+        wipepointer(ed25519_pk, pk_len);
+        wipepointer(ed25519_sk, sk_len);
+
+    return e;
 }

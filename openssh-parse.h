@@ -2,8 +2,22 @@
 #define _headerguard_openssh_parse_h_
 
 #include "buffer.h"
+#include "openssh-key.h"
 
-/* openssh-key-v1 format:
+/* openssh-key-v1 file constants */
+#define OPENSSH_KEY_V1_MARK_BEGIN       "-----BEGIN OPENSSH PRIVATE KEY-----\n"
+#define OPENSSH_KEY_V1_MARK_BEGIN_LEN   ( sizeof(OPENSSH_KEY_V1_MARK_BEGIN) - 1 )
+
+#define OPENSSH_KEY_V1_MARK_END         "-----END OPENSSH PRIVATE KEY-----\n"
+#define OPENSSH_KEY_V1_MARK_END_LEN     ( sizeof(OPENSSH_KEY_V1_MARK_END)   - 1 )
+
+#define OPENSSH_KEY_V1_MAGICBYTES       "openssh-key-v1"
+#define OPENSSH_KEY_V1_MAGICBYTES_LEN   sizeof(OPENSSH_KEY_V1_MAGICBYTES)
+
+/* sizes for cipher = none */
+#define OPENSSH_PARSE_NOCIPHER_BLOCKSIZE  8
+
+/* openssh-key-v1 base64 decoded format:
 
     byte[]  AUTH_MAGIC
     string  ciphername
@@ -20,53 +34,26 @@
      - int is a 32 bit long unsigned number = uint32
      - string is a concatenation of a uint32 length and
         string of appropriate length
-/*
-
-/* reading openssh-key-v1 constants */
-#define OPENSSH_KEY_V1_MARK_BEGIN       "-----BEGIN OPENSSH PRIVATE KEY-----\n"
-#define OPENSSH_KEY_V1_MARK_BEGIN_LEN   ( sizeof(OPENSSH_KEY_V1_MARK_BEGIN) - 1 )
-
-#define OPENSSH_KEY_V1_MARK_END         "-----END OPENSSH PRIVATE KEY-----\n"
-#define OPENSSH_KEY_V1_MARK_END_LEN     ( sizeof(OPENSSH_KEY_V1_MARK_END)   - 1 )
-
-#define OPENSSH_KEY_V1_MAGICBYTES       "openssh-key-v1"
-#define OPENSSH_KEY_V1_MAGICBYTES_LEN   sizeof(OPENSSH_KEY_V1_MAGICBYTES)
-
-/* sizes for cipher = none */
-#define OPENSSH_KEY_NOCIPHER_BLOCKSIZE  8
+*/
 
 /* error codes */
-enum openssh_key_status {
-    OPENSSH_KEY_SUCCESS =   0,
-    OPENSSH_KEY_FAILURE = -30,
+enum openssh_parse_status {
+    OPENSSH_PARSE_SUCCESS =   0,
+    OPENSSH_PARSE_FAILURE = -30,
 
-    OPENSSH_KEY_INVALID_FORMAT,
-    OPENSSH_KEY_INVALID_PRIVATE_FORMAT,
-    OPENSSH_KEY_UNSUPPORTED_CIPHER,
-    OPENSSH_KEY_UNSUPPORTED_KDF,
-    OPENSSH_KEY_UNSUPPORTED_MULTIPLEKEYS,
+    OPENSSH_PARSE_INVALID_FORMAT,
+    OPENSSH_PARSE_INVALID_PRIVATE_FORMAT,
+    OPENSSH_PARSE_UNSUPPORTED_CIPHER,
+    OPENSSH_PARSE_UNSUPPORTED_KDF,
+    OPENSSH_PARSE_UNSUPPORTED_MULTIPLEKEYS,
+    OPENSSH_PARSE_UNSUPPORTED_KEY_TYPE,
+    OPENSSH_PARSE_ALLOCATION_FAILURE,
 };
 
-/* opaque EC_KEY to make it compile for now .. */
-typedef struct EC_KEY EC_KEY;
-
-/* sshkey struct */
-struct opensshkey {
-	int	 type;
-	
-    /* ecdsa nist curves */
-	int	     ecdsa_nid;	/* NID of curve */
-	EC_KEY  *ecdsa_key;
-
-    /* ed25519 */
-	unsigned char   *ed25519_sk;
-	unsigned char   *ed25519_pk;
-};
-
-
-
-/* decode buffer */
+/* decode a filebuffer */
 int openssh_key_v1_parse (struct buffer *filebuf);
-int openssh_private_deserialize (struct buffer *buf, struct opensshkey **keyptr);
+
+/* deserialize a private key blob */
+int openssh_deserialize_private (struct buffer *buf, struct opensshkey **keyptr);
 
 #endif

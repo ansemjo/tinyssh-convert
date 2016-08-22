@@ -13,7 +13,7 @@ int strnzero (const char *str) {
 }
 
 
-/* ask for user input */
+/* prompt for user input */
 void prompt (const char *prmt, char *dest, size_t dest_len, const char *df_value) {
     char buf[dest_len];
     

@@ -9,15 +9,6 @@
 #include "utils.h"
 #include "base64.h"
 
-/* allocate zero-initialised */
-#define zalloc(len) calloc(1,len)
-
-/* volatile memset to try & avoid optmising it away */
-static void * (* const volatile volatile_memset)(void *,  int, size_t) = memset;
-#define memzero(ptr, size)       volatile_memset(   ptr,    0,   size)
-#define memfill(ptr, size, fill) volatile_memset(   ptr, fill,   size)
-
-
 /* size constraints */
 #define BUFFER_ALLOCATION_INITIAL                512  /*   512 B */
 #define BUFFER_ALLOCATION_INCREMENT             2048  /*   2 KiB */

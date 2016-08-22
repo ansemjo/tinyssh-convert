@@ -145,7 +145,7 @@ int buffer_reserve (struct buffer *buf, size_t request_size, unsigned char **req
 }
 
 /* put new data into buffer */
-int buffer_put (struct buffer *buf, size_t datalength, const void *data)
+int buffer_put (struct buffer *buf, const void *data, size_t datalength)
 {
     unsigned char *put;
     int e = BUFFER_FAILURE;
@@ -216,7 +216,7 @@ int buffer_put_decoded_base64 (struct buffer *buf, const char *base64string)
         e = BUFFER_INVALID_FORMAT;
     } else { /* if successful */
         /* put decoded string into buffer */
-        e = buffer_put(buf, decoded_len, decoded);
+        e = buffer_put(buf, decoded, decoded_len);
     }
 
     memzero(decoded, encoded_len);
@@ -378,7 +378,7 @@ int buffer_new_from_string (struct buffer **buf, const char *string, size_t strl
     if ((*buf = newbuffer()) == NULL)
         return BUFFER_ALLOCATION_FAILED;
 
-    return buffer_put(*buf, strlen, string);    
+    return buffer_put(*buf, string, strlen);    
 }
 
 /* create a new buffer from the remaining data in a given buffer */

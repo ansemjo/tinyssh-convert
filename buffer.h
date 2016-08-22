@@ -42,7 +42,7 @@ struct buffer * newbuffer   ();
 
 /* put data into buffer */
 int buffer_reserve      (struct buffer *buf, size_t request_size, unsigned char **request_ptr);
-int buffer_put          (struct buffer *buf, size_t datalength, const void *data);
+int buffer_put          (struct buffer *buf, const void *data, size_t datalength);
 int buffer_put_u32      (struct buffer *buf, unsigned long value);
 int buffer_put_u8       (struct buffer *buf, unsigned char value);
  #define buffer_put_char buffer_put_u8

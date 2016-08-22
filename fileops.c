@@ -82,7 +82,7 @@ int loadfile (const char *file, struct buffer **filebuf)
             break;
 
         /* put local into buffer */
-        if ((e = buffer_put(*filebuf, readlen, readbuf)) != BUFFER_SUCCESS)
+        if ((e = buffer_put(*filebuf, readbuf, readlen)) != BUFFER_SUCCESS)
             break;
     }
 

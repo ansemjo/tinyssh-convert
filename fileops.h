@@ -40,7 +40,8 @@ enum fileops_status {
 int io (ssize_t (*rw) (int, void *, size_t), int fd, void *data, size_t datalen, size_t *iolenptr);
 
 /* load and save files to/from buffer */
-int loadfile (const char *file, struct buffer **filebuf);
-int savefile (const char *file, struct buffer  *filebuf);
+int loadfile   (const char *file, struct buffer **filebuf);
+int savefile   (const char *file, struct buffer  *filebuf);
+int savestring (const char *file, unsigned char *string, size_t stringlen);
 
 #endif

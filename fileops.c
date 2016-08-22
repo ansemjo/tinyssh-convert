@@ -93,30 +93,28 @@ int loadfile (const char *file, struct buffer **filebuf)
     return e;
 }
 
-/* save a buffer to file */
-int savefile (const char *file, struct buffer *filebuf)
+/* save a string as data to a file */
+int savestring (const char *file, unsigned char *string, size_t stringlen)
 {
     int e = FILEOPS_FAILURE;
     int fd;
 
     /* check for nullpointers */
-    if (filebuf == NULL || file == NULL)
+    if (string == NULL || file == NULL)
         return FILEOPS_NULLPOINTER;
     
     /* open for writing */
     if ((fd = openwriting(file)) == -1)
         return FILEOPS_CANNOT_OPEN_WRITING;
 
-    /* get pointer to and size of data to write */
+    /* variable to check written bytes */
     size_t writelen;
-    unsigned char *dataptr = buffer_get_dataptr(filebuf);
-    size_t length = buffer_get_datasize(filebuf);
 
     /* try to write contents of buffer to file */
-    e = io (iowrite, fd, dataptr, length, &writelen);
+    e = io (iowrite, fd, string, stringlen, &writelen);
     
     /* catch errors */
-    if (e != FILEOPS_SUCCESS || writelen != length) {
+    if (e != FILEOPS_SUCCESS || writelen != stringlen) {
         close(fd);
         unlink(file);
         return FILEOPS_INCOMPLETE_WRITE;
@@ -126,4 +124,19 @@ int savefile (const char *file, struct buffer *filebuf)
     fsync(fd);
     close(fd);
     return e;
+}
+
+/* save a buffer to file */
+int savefile (const char *file, struct buffer *filebuf)
+{
+    /* check for nullpointers */
+    if (filebuf == NULL || file == NULL)
+        return FILEOPS_NULLPOINTER;
+    
+    /* get pointer to and size of data to write */
+    unsigned char *dataptr = buffer_get_dataptr(filebuf);
+    size_t length = buffer_get_datasize(filebuf);
+
+    /* try to write contents of buffer to file */
+    return savestring (file, dataptr, length);
 }

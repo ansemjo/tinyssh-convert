@@ -151,6 +151,7 @@ const unsigned char *opensshkey_get_typename (const struct opensshkey *key)
 /* | operations on key material | */
 /* +----------------------------+ */
 
+/* set pk and sk on ed25519 key */
 int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsigned char *sk)
 {
     if (key == NULL)
@@ -171,6 +172,61 @@ int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsi
     return OPENSSH_KEY_SUCCESS;
 }
 
+/* return public and private part of elliptic curve keys */
+int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned char *dir, size_t dir_len)
+{
+    if (key == NULL)
+        return OPENSSH_KEY_NULLPOINTER;
+
+    int e = OPENSSH_KEY_FAILURE;
+
+    /* allocate a new buffer for key material */
+    struct buffer *keybuf = NULL;
+    if ((keybuf = newbuffer()) == NULL)
+        return BUFFER_ALLOCATION_FAILED;
+
+    /* strings to construct the filenames in */
+    unsigned char pubkey_file[dir_len + 64], seckey_file[dir_len + 64];
+    strncat(pubkey_file, dir, dir_len);
+    strncat(seckey_file, dir, dir_len);
+
+    /* decide by key type */
+    switch (key->type) {
+
+        case KEY_ED25519:
+        case KEY_ED25519_CERT:
+
+            /* we need a private key but can use
+               the embedded public key there */
+            if (key->ed25519_sk == NULL)
+                early_exit(OPENSSH_KEY_NULLPOINTER);
+
+            /* construct the filenames */
+            strncat(pubkey_file, ED25519_PUBLICKEY_NAME, sizeof ED25519_PUBLICKEY_NAME);
+            strncat(seckey_file, ED25519_SECRETKEY_NAME, sizeof ED25519_SECRETKEY_NAME);
+            
+            /* put secretkey into buffer */
+            if ((e = buffer_put(keybuf, key->ed25519_sk, ED25519_SECRETKEY_SIZE)) != BUFFER_SUCCESS)
+                early_exit(e);
+
+        
+        case KEY_ECDSA:
+        case KEY_ECDSA_CERT:
+            /* not supported yet, requires ssl library */
+        
+        case KEY_UNKNOWN:
+        case KEY_UNSPECIFIED:
+        default:
+            return OPENSSH_KEY_UNKNOWN_KEYTYPE;
+    }
+
+    /* housekeeping .. */
+    cleanup:
+        freebuffer(keybuf);
+    
+    return e;
+}
+
 /* +-----------+ */
 /* | debugging | */
 /* +-----------+ */
@@ -179,6 +235,7 @@ void opensshkey_dump (const struct opensshkey *key)
 {
     
     if (key == NULL) {
+        printf("Passed key pointer is NULL!\n");
         return;
     }
 

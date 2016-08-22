@@ -91,15 +91,10 @@ int main(int argc, char **argv)
     if ((e = loadfile(sourcefn, &filebuffer)) != 0)
         printf("loadfile error: %d", e);
 
-    /* show contents of file */
-    buffer_dump(filebuffer);
-
-    printf("PARSE FILEBUFFER AS OPENSSH KEY\n");
     struct opensshkey *privatekey = NULL;
     if ((e = openssh_key_v1_parse(filebuffer, &privatekey))!= OPENSSH_KEY_SUCCESS)
         printf("PARSING FAILED WITH ERRORCODE %d\n", e);
 
-    printf("\n");
     opensshkey_dump(privatekey);
 
 

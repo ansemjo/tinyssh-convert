@@ -8,6 +8,8 @@
 #include <stdio.h>
 
 #include "utils.h"
+#include "buffer.h"
+#include "fileops.h"
 
 /* opaque sshkey struct */
 struct opensshkey;
@@ -22,9 +24,11 @@ enum openssh_keytypes {
     KEY_UNSPECIFIED,
 };
 
-/* ed25519 key sizes */
+/* ed25519 key constants */
 #define ED25519_SECRETKEY_SIZE 64U
 #define ED25519_PUBLICKEY_SIZE 32U
+#define ED25519_SECRETKEY_NAME ".ed25519.sk"
+#define ED25519_PUBLICKEY_NAME "ed25519.pk"
 
 /* error codes */
 enum openssh_key_status {
@@ -34,6 +38,7 @@ enum openssh_key_status {
     OPENSSH_KEY_NULLPOINTER,
     OPENSSH_KEY_MISSING_ARGUMENTS,
     OPENSSH_KEY_INCOMPATIBLE,
+    OPENSSH_KEY_UNKNOWN_KEYTYPE,
 };
 
 /* allocate and free */
@@ -45,9 +50,11 @@ struct opensshkey * newopensshkey  (int type);
                   int opensshkey_get_type     (const struct opensshkey *key);
 const unsigned char * opensshkey_get_typename (const struct opensshkey *key);
 
-/* set key values */
+/* handle key material */
 int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsigned char *sk);
 
+/* export to file */
+int opensshkey_save_to_file (const struct opensshkey *key, const unsigned char *file);
 
 /* debugging */
 void opensshkey_dump (const struct opensshkey *key);

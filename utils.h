@@ -14,6 +14,10 @@ static void * (* const volatile volatile_memset)(void *,  int, size_t) = memset;
 /* shorthand for wiping pointers */
 #define wipepointer(ptr, size) if (ptr != NULL) { memzero(ptr, size); free(ptr); ptr = NULL; }
 
+/* early exit, e.g. if some condition failed, but do cleanup first! */
+#define early_exit(status) do { e = (status); goto cleanup; } while (0)
+
+
 /* check if a string is not zero and not zerolength */
 int strnzero (const char *str);
 

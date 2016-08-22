@@ -1,8 +1,5 @@
 #include "openssh-parse.h"
 
-/* early exit, e.g. if some condition failed, but do cleanup first! */
-#define early_exit(status) do { e = (status); goto cleanup; } while (0)
-
 /* parse key from a openssh-key-v1 formatted filebuffer */
 int openssh_key_v1_parse (struct buffer *filebuf, struct opensshkey **keyptr)
 {

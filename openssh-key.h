@@ -41,4 +41,7 @@ struct opensshkey * newopensshkey  (int type);
 int opensshkey_detect_type (const unsigned char *keytype);
 int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsigned char *sk);
 
+/* debugging */
+void opensshkey_dump (const struct opensshkey *key);
+
 #endif

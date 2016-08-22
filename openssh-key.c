@@ -132,3 +132,37 @@ int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsi
     return OPENSSH_KEY_SUCCESS;
     
 }
+
+/* +-----------+ */
+/* | debugging | */
+/* +-----------+ */
+
+void opensshkey_dump (const struct opensshkey *key)
+{
+    #include <stdio.h>
+
+    if (key == NULL) {
+        printf("key is NULL! won't dump.'");
+        return;
+    }
+
+    printf("Dumping opensshkey ...\n");
+
+    switch (key->type) {
+        case KEY_ECDSA:
+        case KEY_ECDSA_CERT:
+            printf("Keytype is: ECDSA\n");
+            break;
+        case KEY_ED25519:
+        case KEY_ED25519_CERT:
+            printf("Keytype is: ed25519\n");
+            debugbuf("ed25519 public key", key->ed25519_pk, ED25519_PUBLICKEY_SIZE);
+            debugbuf("ed25519 secret key", key->ed25519_sk, ED25519_SECRETKEY_SIZE);
+            break;
+        case KEY_UNKNOWN:
+        default:
+            printf("Keytype is: UNKNOWN\n");
+            break;
+    }
+
+}

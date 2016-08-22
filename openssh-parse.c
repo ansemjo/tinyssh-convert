@@ -229,6 +229,9 @@ int openssh_deserialize_private (struct buffer *buf, struct opensshkey **keyptr)
         newkey = NULL;
     }
 
+    /* DEBUG */
+    opensshkey_dump(newkey);
+
     /* success */
     e = OPENSSH_PARSE_SUCCESS;
 

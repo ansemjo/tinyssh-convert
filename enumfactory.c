@@ -9,7 +9,7 @@
 
 /* build the enum list */
 #define E(enum, description) enum
-enum status_enums { STATUS_LIST, STATUS_LIST_LENGTH };
+enum status_enums { STATUS_LIST, STATUSMAX };
 
 /* build the description array */
 #undef E
@@ -19,9 +19,7 @@ static const struct { STATUS_STRUCT } const status[] = { STATUS_LIST };
 
 int main (void)
 {
-    int e = 2;
-
-    if (e < STATUS_LIST_LENGTH && e >= 0)
+    for (int e = SUCCESS; e < STATUSMAX; e++)
         printf("error [%d]%s has description: \"%s\"\n",
             status[e].code, status[e].label, status[e].description);
 

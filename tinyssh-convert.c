@@ -39,6 +39,7 @@
 #include "fileops.h"
 #include "buffer.h"
 #include "openssh-parse.h"
+#include "openssh-key.h"
 
 /* the secretkey filename */
 char sourcefn[1024];
@@ -94,9 +95,12 @@ int main(int argc, char **argv)
     buffer_dump(filebuffer);
 
     printf("PARSE FILEBUFFER AS OPENSSH KEY\n");
-    e = openssh_key_v1_parse(filebuffer);
-    if (e != OPENSSH_KEY_SUCCESS)
+    struct opensshkey *privatekey = NULL;
+    if ((e = openssh_key_v1_parse(filebuffer, &privatekey))!= OPENSSH_KEY_SUCCESS)
         printf("PARSING FAILED WITH ERRORCODE %d\n", e);
+
+    printf("\n");
+    opensshkey_dump(privatekey);
 
 
     /* ask for destination */
@@ -109,6 +113,7 @@ int main(int argc, char **argv)
     */
 
     freebuffer(filebuffer);
+    freeopensshkey(privatekey);
 
     /*
     struct buffer *newbuff;

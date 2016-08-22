@@ -4,6 +4,8 @@
 #include <string.h>
 #include <strings.h>
 #include <stdlib.h>
+/* for debugging printf */
+#include <stdio.h>
 
 #include "utils.h"
 
@@ -12,11 +14,12 @@ struct opensshkey;
 
 /* openssh key types */
 enum openssh_keytypes {
-	KEY_UNKNOWN = -1,
     KEY_ED25519,
 	KEY_ED25519_CERT,
     KEY_ECDSA,
     KEY_ECDSA_CERT,
+    KEY_UNKNOWN,
+    KEY_UNSPECIFIED,
 };
 
 /* ed25519 key sizes */
@@ -37,9 +40,14 @@ enum openssh_key_status {
 struct opensshkey * newopensshkey  (int type);
                void freeopensshkey (struct opensshkey *key);
 
-/* detect keytype from string */
-int opensshkey_detect_type (const unsigned char *keytype);
+/* parsing or showing keytype */
+                  int opensshkey_detect_type  (const unsigned char *keytype);
+                  int opensshkey_get_type     (const struct opensshkey *key);
+const unsigned char * opensshkey_get_typename (const struct opensshkey *key);
+
+/* set key values */
 int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsigned char *sk);
+
 
 /* debugging */
 void opensshkey_dump (const struct opensshkey *key);

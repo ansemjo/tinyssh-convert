@@ -48,10 +48,11 @@ enum openssh_parse_status {
     OPENSSH_PARSE_UNSUPPORTED_MULTIPLEKEYS,
     OPENSSH_PARSE_UNSUPPORTED_KEY_TYPE,
     OPENSSH_PARSE_ALLOCATION_FAILURE,
+    OPENSSH_PARSE_INTERNAL_ERROR,
 };
 
 /* decode a filebuffer */
-int openssh_key_v1_parse (struct buffer *filebuf);
+int openssh_key_v1_parse (struct buffer *filebuf, struct opensshkey **keyptr);
 
 /* deserialize a private key blob */
 int openssh_deserialize_private (struct buffer *buf, struct opensshkey **keyptr);

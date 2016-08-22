@@ -27,16 +27,19 @@ static const struct {
     int nid;
     int iscert;
 } supported_keytypes[] = {
-/*    name                                          shortname       type                nid                  cert */
-	{ "ssh-ed25519",                                "ED25519",      KEY_ED25519,        0,                      0 },
-	{ "ssh-ed25519-cert-v01@openssh.com",           "ED25519-CERT", KEY_ED25519_CERT,   0,                      1 },
+/*    name                                          shortname       type                ecdsa_nid             cert */
+	{ "ssh-ed25519",                                "ED25519",      KEY_ED25519,        -1,                     0 },
+	{ "ssh-ed25519-cert-v01@openssh.com",           "ED25519-CERT", KEY_ED25519_CERT,   -1,                     1 },
     { "ecdsa-sha2-nistp256",                        "ECDSA",        KEY_ECDSA,          NID_X9_62_prime256v1,   0 },
 	{ "ecdsa-sha2-nistp256-cert-v01@openssh.com",   "ECDSA-CERT",   KEY_ECDSA_CERT,     NID_X9_62_prime256v1,   1 },
 	{ "ecdsa-sha2-nistp384",                        "ECDSA",        KEY_ECDSA,          NID_secp384r1,          0 },
 	{ "ecdsa-sha2-nistp384-cert-v01@openssh.com",   "ECDSA-CERT",   KEY_ECDSA_CERT,     NID_secp384r1,          1 },
 	{ "ecdsa-sha2-nistp521",                        "ECDSA",        KEY_ECDSA,          NID_secp521r1,          0 },
 	{ "ecdsa-sha2-nistp521-cert-v01@openssh.com",   "ECDSA-CERT",   KEY_ECDSA_CERT,     NID_secp521r1,          1 },
+    { "unknown",                                    "UNKNOWN",      KEY_UNKNOWN,        -1,                     0 },
 };
+#define n_supported_keytypes sizeof supported_keytypes / sizeof *supported_keytypes
+
 
 /* +--------------------------------+ */
 /* | newly allocate or cleanly free | */
@@ -46,6 +49,9 @@ static const struct {
 struct opensshkey *newopensshkey (int type)
 {
     struct opensshkey *newkey;
+
+    if (type > KEY_UNKNOWN)
+        return NULL;
 
     if ((newkey = zalloc(sizeof *newkey)) == NULL)
         return NULL;
@@ -59,7 +65,7 @@ struct opensshkey *newopensshkey (int type)
     return newkey;
 }
 
-/* free with explizit zeroing */
+/* free with explicit zeroing */
 void freeopensshkey (struct opensshkey *key)
 {
     if (key == NULL)
@@ -94,24 +100,56 @@ void freeopensshkey (struct opensshkey *key)
 }
 
 
-/* +---------------------+ */
-/* | misc key operations | */
-/* +---------------------+ */
+/* +--------------------+ */
+/* | keytype operations | */
+/* +--------------------+ */
 
 /* detect key type from given string */
 int opensshkey_detect_type (const unsigned char *name)
 {
-    int numsupported = sizeof supported_keytypes / sizeof *supported_keytypes;
-    for (int i = 0; i < numsupported; i++) {
+    for (int i = 0; i < n_supported_keytypes; i++) {
+        /* the supported keytype has invalid names */
         if (supported_keytypes[i].name == NULL || supported_keytypes[i].shortname == NULL)
             continue;
-            /* match long name */
+        /* match long name */
         if (strcmp(name, supported_keytypes[i].name) == 0 ||
+        /* or match short name */
             strcasecmp(name, supported_keytypes[i].shortname) == 0)
                 return supported_keytypes[i].type;
     }
     return KEY_UNKNOWN;
 }
+
+int opensshkey_get_type (const struct opensshkey *key)
+{
+    if (key == NULL)
+        return KEY_UNSPECIFIED;
+    
+    return key->type;
+}
+
+const unsigned char *opensshkey_get_typename (const struct opensshkey *key)
+{
+    if (key == NULL)
+        return NULL;
+
+    for (int i = 0; i < n_supported_keytypes; i++) {
+        /* the supported keytype has invalid names */
+        if (supported_keytypes[i].name == NULL || supported_keytypes[i].shortname == NULL)
+            continue;
+        /* match keytype */
+        if (key->type == supported_keytypes[i].type &&
+        /* and match nid */
+            key->ecdsa_nid == supported_keytypes[i].nid)
+                
+                return supported_keytypes[i].name;
+    }
+    return NULL;
+}
+
+/* +----------------------------+ */
+/* | operations on key material | */
+/* +----------------------------+ */
 
 int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsigned char *sk)
 {
@@ -126,11 +164,11 @@ int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsi
     if (pk != NULL)
         key->ed25519_pk = pk;
 
+    /* set new privatekey */
     if (sk != NULL)
         key->ed25519_sk = sk;
     
     return OPENSSH_KEY_SUCCESS;
-    
 }
 
 /* +-----------+ */
@@ -139,10 +177,8 @@ int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsi
 
 void opensshkey_dump (const struct opensshkey *key)
 {
-    #include <stdio.h>
-
+    
     if (key == NULL) {
-        printf("key is NULL! won't dump.'");
         return;
     }
 
@@ -151,7 +187,7 @@ void opensshkey_dump (const struct opensshkey *key)
     switch (key->type) {
         case KEY_ECDSA:
         case KEY_ECDSA_CERT:
-            printf("Keytype is: ECDSA\n");
+            printf("Keytype is: ECDSA (unsupported)\n");
             break;
         case KEY_ED25519:
         case KEY_ED25519_CERT:
@@ -161,7 +197,7 @@ void opensshkey_dump (const struct opensshkey *key)
             break;
         case KEY_UNKNOWN:
         default:
-            printf("Keytype is: UNKNOWN\n");
+            printf("Keytype is UNKNOWN!\n");
             break;
     }
 

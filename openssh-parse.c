@@ -129,7 +129,7 @@ int openssh_key_v1_parse (struct buffer *filebuf, struct opensshkey **keyptr)
     unsigned char *comment;
     if ((e = buffer_read_string(privatekeyblob, &comment, NULL, '\0')) != OPENSSH_PARSE_SUCCESS)
         early_exit(e);
-    printf("Successfully parsed %s key with comment:\n%s\n", opensshkey_get_typename(newkey), comment);
+    printf("Successfully parsed %s key with comment: %s\n", opensshkey_get_typename(newkey), comment);
 
     /* write pointer to parsed key */
     if (keyptr != NULL) {

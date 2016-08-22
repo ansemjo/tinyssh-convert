@@ -180,10 +180,9 @@ int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned cha
 
     int e = OPENSSH_KEY_FAILURE;
 
-    /* allocate a new buffer for key material */
-    struct buffer *keybuf = NULL;
-    if ((keybuf = newbuffer()) == NULL)
-        return BUFFER_ALLOCATION_FAILED;
+    /* pointers to data to be written */
+    unsigned char *seckey = NULL, *pubkey = NULL;
+    size_t seckey_len = 0, pubkey_len = 0;
 
     /* strings to construct the filenames in */
     unsigned char pubkey_file[1024 + 64] = "", seckey_file[1024 + 64] = "";
@@ -201,21 +200,21 @@ int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned cha
         case KEY_ED25519:
         case KEY_ED25519_CERT:
 
-            /* we need a private key but can use
-               the embedded public key there */
-            if (key->ed25519_sk == NULL)
+            /* we need a private key but could use
+               the embedded public key there. use public
+               key anyway, as it is easier pointer math */
+            if (key->ed25519_sk == NULL || key->ed25519_pk == NULL)
                 early_exit(OPENSSH_KEY_NULLPOINTER);
+            
+            /* set pointers and lengths */
+            seckey = key->ed25519_sk;
+            seckey_len = ED25519_SECRETKEY_SIZE;
+            pubkey = key->ed25519_pk;
+            pubkey_len = ED25519_PUBLICKEY_SIZE;
 
             /* construct the filenames */
-            strncat(pubkey_file, ED25519_PUBLICKEY_NAME, sizeof ED25519_PUBLICKEY_NAME);
-            strncat(seckey_file, ED25519_SECRETKEY_NAME, sizeof ED25519_SECRETKEY_NAME);
-            
-            /* put secretkey into buffer */
-            if ((e = buffer_put(keybuf, key->ed25519_sk, ED25519_SECRETKEY_SIZE)) != BUFFER_SUCCESS)
-                early_exit(e);
-            
-            /* DEBUG */
-            printf("Would write ..\n seckey to: %s\n pubkey to: %s\n", seckey_file, pubkey_file);
+            strncat(pubkey_file, ED25519_PUBLIC_TINYSSH_NAME, sizeof ED25519_PUBLIC_TINYSSH_NAME);
+            strncat(seckey_file, ED25519_SECRET_TINYSSH_NAME, sizeof ED25519_SECRET_TINYSSH_NAME);
 
             break;
         
@@ -229,9 +228,22 @@ int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned cha
             return OPENSSH_KEY_UNKNOWN_KEYTYPE;
     }
 
+    /* write keys */
+    if (seckey != NULL && pubkey != NULL) {
+        /* secret key */
+        printf("writing seckey to: %s ...\n", seckey_file);
+        if ((e = savestring(seckey_file, seckey, seckey_len)) != FILEOPS_SUCCESS)
+            early_exit(e);
+        /* public key */
+        printf("writing pubkey to: %s ...\n", pubkey_file);
+        if ((e = savestring(pubkey_file, pubkey, pubkey_len)) != FILEOPS_SUCCESS)
+            early_exit(e);
+    }
+    
     /* housekeeping .. */
     cleanup:
-        freebuffer(keybuf);
+        seckey = NULL;
+        pubkey = NULL;
     
     return e;
 }

@@ -27,8 +27,8 @@ enum openssh_keytypes {
 /* ed25519 key constants */
 #define ED25519_SECRETKEY_SIZE 64U
 #define ED25519_PUBLICKEY_SIZE 32U
-#define ED25519_SECRETKEY_NAME ".ed25519.sk"
-#define ED25519_PUBLICKEY_NAME "ed25519.pk"
+#define ED25519_SECRET_TINYSSH_NAME ".ed25519.sk"
+#define ED25519_PUBLIC_TINYSSH_NAME "ed25519.pk"
 
 /* error codes */
 enum openssh_key_status {

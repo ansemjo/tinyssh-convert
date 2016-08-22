@@ -17,4 +17,6 @@ void fatal (enum ERRORCODE, const char *, ...);
 const char *errortext (enum ERRORCODE);
 void usage ();
 
+/*#define eprintf(...) fprintf (stderr, __VA_ARGS__)*/
+
 #endif

@@ -1,21 +1,17 @@
 #include <stdio.h>
 
-#define STATUS_LIST \
-    E( SUCCESS, This is not an error. ), \
-    E( INVALID, Something went wrong. ), \
-    E( ERRM,    Just another error.   )
+#define STATUS_LIST(fn) \
+    fn( SUCCESS, This is not an error. ), \
+    fn( INVALID, Something went wrong. ), \
+    fn( ERRM,    Just another error.   )
 
 #define STATUS_STRUCT int code; const char *label; const char *description;
 
-/* build the enum list */
-#define E(enum, description) enum
-enum status_enums { STATUS_LIST, STATUSMAX };
+#define   as_enum(enum, description)      enum
+#define as_triple(enum, description)    { enum, #enum, #description }
 
-/* build the description array */
-#undef E
-#define E(enum, description) { enum, #enum, #description }
-static const struct { STATUS_STRUCT } const status[] = { STATUS_LIST };
-
+enum status_codes { STATUS_LIST(as_enum), STATUSMAX };
+static const struct { STATUS_STRUCT } const status[] = { STATUS_LIST(as_triple) };
 
 int main (void)
 {

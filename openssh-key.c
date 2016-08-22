@@ -173,7 +173,7 @@ int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsi
 }
 
 /* return public and private part of elliptic curve keys */
-int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned char *dir, size_t dir_len)
+int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned char *dir)
 {
     if (key == NULL)
         return OPENSSH_KEY_NULLPOINTER;
@@ -186,9 +186,14 @@ int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned cha
         return BUFFER_ALLOCATION_FAILED;
 
     /* strings to construct the filenames in */
-    unsigned char pubkey_file[dir_len + 64], seckey_file[dir_len + 64];
-    strncat(pubkey_file, dir, dir_len);
-    strncat(seckey_file, dir, dir_len);
+    unsigned char pubkey_file[1024 + 64] = "", seckey_file[1024 + 64] = "";
+    strncat(pubkey_file, dir, 1023);
+    strncat(seckey_file, dir, 1023);
+    /* if last character is not a slash, append it */
+    if (strncmp(seckey_file + strlen(seckey_file) - 1, "/", 1) != 0) {
+        strncat(pubkey_file, "/", 1);
+        strncat(seckey_file, "/", 1);
+    }
 
     /* decide by key type */
     switch (key->type) {
@@ -208,7 +213,11 @@ int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned cha
             /* put secretkey into buffer */
             if ((e = buffer_put(keybuf, key->ed25519_sk, ED25519_SECRETKEY_SIZE)) != BUFFER_SUCCESS)
                 early_exit(e);
+            
+            /* DEBUG */
+            printf("Would write ..\n seckey to: %s\n pubkey to: %s\n", seckey_file, pubkey_file);
 
+            break;
         
         case KEY_ECDSA:
         case KEY_ECDSA_CERT:

@@ -54,7 +54,7 @@ const unsigned char * opensshkey_get_typename (const struct opensshkey *key);
 int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsigned char *sk);
 
 /* export to file */
-int opensshkey_save_to_file (const struct opensshkey *key, const unsigned char *file);
+int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned char *dir);
 
 /* debugging */
 void opensshkey_dump (const struct opensshkey *key);

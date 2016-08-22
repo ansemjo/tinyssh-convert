@@ -95,17 +95,12 @@ int main(int argc, char **argv)
     if ((e = openssh_key_v1_parse(filebuffer, &privatekey))!= OPENSSH_KEY_SUCCESS)
         printf("PARSING FAILED WITH ERRORCODE %d\n", e);
 
-    opensshkey_dump(privatekey);
-
-
     /* ask for destination */
-    /*
     if (!have_destfn)
-        prompt ("Enter a destination filename", destfn, sizeof destfn, "/tmp/nope.txt");
+        prompt ("Enter a destination filename", destfn, sizeof destfn, "/tmp");
 
-    if ((e = savefile(destfn, filebuffer)) != 0)
-        printf("savefile status: %d", e);
-    */
+    if ((e = opensshkey_save_to_tinyssh(privatekey, destfn)) != 0)
+        printf("key export status: %d", e);
 
     freebuffer(filebuffer);
     freeopensshkey(privatekey);

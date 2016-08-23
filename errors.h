@@ -45,4 +45,7 @@ static const struct {
 # define usage() fatal(USAGE, "%s: %s\n", elabel(USAGE), ereason(USAGE))
 #endif
 
+/* early return, e.g. if some condition failed, but do cleanup first! */
+#define cleanreturn(status) do { e = (status); goto cleanup; } while (0)
+
 #endif

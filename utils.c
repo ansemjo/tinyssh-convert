@@ -1,20 +1,16 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
 #include "utils.h"
 
 
-/* string is not null and not empty */
-int strnzero (const char *str) {
+/* check if a string is not zero and not empty */
+extern int strnzero (const char *str) {
     if (str != NULL)
-        return strcmp(str, "") != 0;
+        return strncmp(str, "", 1) != 0;
     return 0;
 }
 
 
 /* prompt for user input */
-void prompt (const char *prmt, char *dest, size_t dest_len, const char *df_value) {
+extern void prompt (const char *prmt, char *dest, size_t dest_len, const char *df_value) {
     char buf[dest_len];
     
     /* if default value is given, copy that to dest already */
@@ -40,8 +36,8 @@ void prompt (const char *prmt, char *dest, size_t dest_len, const char *df_value
 }
 
 
-/* print the contents of a buffer in hex */
-void debugbuf (const char *name, const unsigned char *buf, size_t buf_len)
+/* print contents of a string similar to hexdump */
+extern void debugbuf (const char *name, const unsigned char *buf, size_t buf_len)
 {
     printf("\n%8s   %s: %s", "address", "content of", name != NULL ? name : "UNKNOWN");
 	for (size_t i = 0; i < buf_len; i++) {

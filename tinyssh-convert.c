@@ -90,8 +90,9 @@ int main(int argc, char **argv)
     if (!have_sourcefn)
         prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt");
 
-    usage();
-    
+    fatal(255, "DEBUGGING ...\n");
+
+
     /* load to buffer */
     struct buffer *filebuffer;
     int e;

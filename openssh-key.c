@@ -76,8 +76,8 @@ void freeopensshkey (struct opensshkey *key)
         case KEY_ED25519:
         case KEY_ED25519_CERT:
             /* memzero() pointers and free */
-            wipepointer(key->ed25519_pk, ED25519_PUBLICKEY_SIZE);
-            wipepointer(key->ed25519_sk, ED25519_SECRETKEY_SIZE);
+            nullpointer(key->ed25519_pk, ED25519_PUBLICKEY_SIZE);
+            nullpointer(key->ed25519_sk, ED25519_SECRETKEY_SIZE);
             break;
 
         case KEY_ECDSA:
@@ -95,7 +95,7 @@ void freeopensshkey (struct opensshkey *key)
     }
 
     /* free struct itself */
-    wipepointer(key, sizeof *key);
+    nullpointer(key, sizeof *key);
     return;
 }
 
@@ -204,7 +204,7 @@ int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned cha
                the embedded public key there. use public
                key anyway, as it is easier pointer math */
             if (key->ed25519_sk == NULL || key->ed25519_pk == NULL)
-                early_exit(OPENSSH_KEY_NULLPOINTER);
+                cleanreturn(OPENSSH_KEY_NULLPOINTER);
             
             /* set pointers and lengths */
             seckey = key->ed25519_sk;
@@ -233,11 +233,11 @@ int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned cha
         /* secret key */
         printf("writing seckey to: %s ...\n", seckey_file);
         if ((e = savestring(seckey_file, seckey, seckey_len)) != FILEOPS_SUCCESS)
-            early_exit(e);
+            cleanreturn(e);
         /* public key */
         printf("writing pubkey to: %s ...\n", pubkey_file);
         if ((e = savestring(pubkey_file, pubkey, pubkey_len)) != FILEOPS_SUCCESS)
-            early_exit(e);
+            cleanreturn(e);
     }
     
     /* housekeeping .. */

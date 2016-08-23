@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 
 /* local includes */
+#include "defines.h"
 #include "errors.h"
 #include "utils.h"
 #include "fileops.h"
@@ -63,14 +64,14 @@ int main(int argc, char **argv)
         /* filename */
         case 'f':
 			if (strncpy(sourcefn, optarg, sizeof(sourcefn)) == NULL)
-				fatal(ERR_FILENAME_TO_LONG, "privatekey filename too long");
+				fatal(FAILURE, "privatekey filename too long");
 			have_sourcefn = 1;
-			break;
+            break;
 
         /* destination directory */
         case 'd':
 			if (strncpy(destfn, optarg, sizeof(destfn)) == NULL)
-			    fatal(ERR_FILENAME_TO_LONG, "destination directory name too long");
+			    fatal(FAILURE, "destination directory name too long");
 			have_destfn = 1;
 			break;
 
@@ -84,6 +85,8 @@ int main(int argc, char **argv)
     /* prompt for source if not given */
     if (!have_sourcefn)
         prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt");
+
+    usage();
     
     /* load to buffer */
     struct buffer *filebuffer;

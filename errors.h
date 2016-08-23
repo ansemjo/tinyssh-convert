@@ -1,22 +1,48 @@
 #ifndef _headerguard_errors_h_
 #define _headerguard_errors_h_
 
-#include "defines.h"
+#include <stdio.h>
 
-enum ERRORCODE {
-    ERR_UNKNOWN = 1,
-    ERR_USAGE,
+/* define general errorcodes and descriptions */
+#define ERROR_LIST(fn) \
+    fn(SUCCESS, Everything is fine. ),\
+    fn(FAILURE, An unspecified error occured. ),\
+    fn(USAGE,   Wrong usage of program. )
 
-    ERR_IO_WRITE_FAIL,
-    ERR_IO_READ_FAIL,
+#define AS_ENUM(enum, description) enum
+#define AS_STRUCT(enum, description) { enum, #enum, #description }
 
-    ERR_FILENAME_TO_LONG,
-};
+/*  define your error codes and descriptions around the project
+ *  with structures like the ERROR_LIST(fn) above, #include those
+ *  header files here and include the lists in the following define:
+ */
+#define ERROR_COLLECTION(fn) ERROR_LIST(fn)
 
-void fatal (enum ERRORCODE, const char *, ...);
-const char *errortext (enum ERRORCODE);
-void usage ();
+/* this will build an enum with all errorcodes .. */
+enum errorcodes { ERROR_COLLECTION(AS_ENUM), ERRORMAX };
 
-/*#define eprintf(...) fprintf (stderr, __VA_ARGS__)*/
+/* and a struct with labels and descriptions, indexable by errorcode */
+static const struct {
+    int code;
+    const char *label;
+    const char *reason;
+} const errorindex[] = { ERROR_COLLECTION(AS_STRUCT) };
+
+/* shorthands to access properties of errorcode e */ 
+#define elabel(e)  errorindex[e].label
+#define ereason(e) errorindex[e].reason
+
+/* printf to stderr */
+#define eprintf(...) fprintf (stderr, __VA_ARGS__)
+
+/* fatally exit with an error message */
+#define fatal(e, ...) do { eprintf(__VA_ARGS__); exit(e); } while(0)
+
+/* print usage message */
+#ifdef USAGE_MESSAGE
+# define usage() fatal(USAGE, "%s\n", USAGE_MESSAGE)
+#else
+# define usage() fatal(USAGE, "%s: %s\n", elabel(USAGE), ereason(USAGE))
+#endif
 
 #endif

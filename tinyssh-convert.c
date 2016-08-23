@@ -26,6 +26,11 @@
  * TinySSH is a small SSH server put into public domain [https://tinyssh.org/].
  */
 
+ #define USAGE_MESSAGE \
+    "Usage: tinyssh-convert [-f keyfile] [-d destination_dir]\n" \
+    "Convert an OpenSSH ed25510 privatekey file to TinySSH\n" \
+    "compatible format keys and save them in destination_dir."
+
 /* system includes */
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +39,6 @@
 #include <sys/stat.h>
 
 /* local includes */
-#include "defines.h"
 #include "errors.h"
 #include "utils.h"
 #include "fileops.h"

@@ -36,7 +36,7 @@ static const struct {
 #define eprintf(...) fprintf (stderr, __VA_ARGS__)
 
 /* fatally exit with an error message */
-#define fatal(e, ...) do { eprintf(__VA_ARGS__); exit(e); } while(0)
+#define fatal(e, ...) do { eprintf(__VA_ARGS__); if ((e % 256) == 0) exit(FAILURE); else exit(e); } while(0)
 
 /* print usage message */
 #ifdef USAGE_MESSAGE

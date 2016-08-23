@@ -1,8 +1,6 @@
 #ifndef _headerguard_buffer_h_
 #define _headerguard_buffer_h_
 
-#include <sys/types.h>
-#include <sys/param.h>
 #include <string.h>
 #include <stdlib.h>
 

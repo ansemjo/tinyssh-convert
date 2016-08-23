@@ -1,7 +1,16 @@
 #include "fileops.h"
 
+/* open file descriptors */
+extern int openwriting (const char *file) {
+    return open(file, O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0644);
+}
+extern int openreading (const char *file) {
+    return open(file, O_RDONLY | O_CLOEXEC);
+}
+
+
 /* direct io on a file descriptor from/to a buffer */
-int io (ssize_t (*rw) (int, void *, size_t), int fd, void *data, size_t datalen, size_t *iolenptr)
+extern int io (ssize_t (*rw) (int, void *, size_t), int fd, void *data, size_t datalen, size_t *iolenptr)
 {
     size_t iolen = 0;
     ssize_t iochunk;
@@ -50,7 +59,7 @@ int io (ssize_t (*rw) (int, void *, size_t), int fd, void *data, size_t datalen,
 
 
 /* load a file to buffer */
-int loadfile (const char *file, struct buffer **filebuf)
+extern int loadfile (const char *file, struct buffer **filebuf)
 {
     int e = FILEOPS_FAILURE;
     int fd;
@@ -75,7 +84,7 @@ int loadfile (const char *file, struct buffer **filebuf)
     /* read file in chunks */
     for (;;) {
         /* read chunk to local buffer */
-        e = io (ioread, fd, readbuf, sizeof readbuf, &readlen);
+        e = io (read, fd, readbuf, sizeof readbuf, &readlen);
 
         /* if error or EOF */
         if (e != FILEOPS_SUCCESS || readlen == 0)
@@ -94,7 +103,7 @@ int loadfile (const char *file, struct buffer **filebuf)
 }
 
 /* save a string as data to a file */
-int savestring (const char *file, unsigned char *string, size_t stringlen)
+extern int savestring (const char *file, unsigned char *string, size_t stringlen)
 {
     int e = FILEOPS_FAILURE;
     int fd;
@@ -111,7 +120,7 @@ int savestring (const char *file, unsigned char *string, size_t stringlen)
     size_t writelen;
 
     /* try to write contents of buffer to file */
-    e = io (iowrite, fd, string, stringlen, &writelen);
+    e = io ((ssize_t (*) (int, void *, size_t))write, fd, string, stringlen, &writelen);
     
     /* catch errors */
     if (e != FILEOPS_SUCCESS || writelen != stringlen) {
@@ -127,7 +136,7 @@ int savestring (const char *file, unsigned char *string, size_t stringlen)
 }
 
 /* save a buffer to file */
-int savefile (const char *file, struct buffer *filebuf)
+extern int savefile (const char *file, struct buffer *filebuf)
 {
     /* check for nullpointers */
     if (filebuf == NULL || file == NULL)

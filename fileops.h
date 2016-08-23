@@ -1,7 +1,6 @@
 #ifndef _headerguard_fileops_h_
 #define _headerguard_fileops_h_
 
-#include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
 #include <poll.h>
@@ -29,19 +28,19 @@ enum fileops_status {
 #define FILEOPS_CHUNKSIZE 1024
 
 /* open file descriptors */
-#define openwriting(file) open(file, O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0644)
-#define openreading(file) open(file, O_RDONLY | O_CLOEXEC)
+extern int openwriting (const char *file);
+extern int openreading (const char *file);
 
-/* functions passable to io function */
-#define iowrite (ssize_t (*) (int, void *, size_t))write
-#define ioread  read
+/* functions passable to io function (casting the const on write)*/
+#define iowrite   (ssize_t (*) (int, void *, size_t))  write
+#define ioread  /*(ssize_t (*) (int, void *, size_t))*/read
 
 /* lowlevel io */
-int io (ssize_t (*rw) (int, void *, size_t), int fd, void *data, size_t datalen, size_t *iolenptr);
+extern int io (ssize_t (*rw) (int, void *, size_t), int fd, void *data, size_t datalen, size_t *iolenptr);
 
 /* load and save files to/from buffer */
-int loadfile   (const char *file, struct buffer **filebuf);
-int savefile   (const char *file, struct buffer  *filebuf);
-int savestring (const char *file, unsigned char *string, size_t stringlen);
+extern int loadfile   (const char *file, struct buffer **filebuf);
+extern int savefile   (const char *file, struct buffer  *filebuf);
+extern int savestring (const char *file, unsigned char *string, size_t stringlen);
 
-#endif
+#endif /* _headerguard_fileops_h_ */

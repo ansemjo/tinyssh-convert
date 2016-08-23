@@ -46,13 +46,11 @@
 #ifndef _BSD_BASE64_H
 #define _BSD_BASE64_H
 
-//#include "includes.h"
-
 #ifndef HAVE___B64_NTOP
 # ifndef HAVE_B64_NTOP
 
-/* encoding */
 int b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize);
+/* encoding alias */
 #define base64_encode b64_ntop
 
 # endif /* !HAVE_B64_NTOP */
@@ -62,8 +60,8 @@ int b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize)
 #ifndef HAVE___B64_PTON
 # ifndef HAVE_B64_PTON
 
-/* decoding */
 int b64_pton(char const *src, u_char *target, size_t targsize);
+/* decoding alias */
 #define base64_decode b64_pton
 
 # endif /* !HAVE_B64_PTON */

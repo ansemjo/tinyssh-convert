@@ -1,5 +1,8 @@
 #include "buffer.h"
 
+/* roundup for the reserve function (from sys/types.h) */
+# define roundup(x, y)  ((((x) + ((y) - 1)) / (y)) * (y))
+
 struct buffer {
     unsigned char *data;  /* pointer to stored data */
     size_t size;          /* length of data stored */

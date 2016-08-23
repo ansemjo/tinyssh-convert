@@ -9,6 +9,8 @@
 #include "errors.h"
 #include "buffer.h"
 
+/****************************************************************************************/
+
 /* status codes */
 enum fileops_status {
     FILEOPS_SUCCESS =    0,
@@ -26,6 +28,8 @@ enum fileops_status {
 
 /* chunk at once before putting it into buffer struct */
 #define FILEOPS_CHUNKSIZE 1024
+
+/****************************************************************************************/
 
 /* open file descriptors */
 extern int openwriting (const char *file);

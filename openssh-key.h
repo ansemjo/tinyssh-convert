@@ -11,6 +11,8 @@
 #include "buffer.h"
 #include "fileops.h"
 
+/****************************************************************************************/
+
 /* opaque sshkey struct */
 struct opensshkey;
 
@@ -40,6 +42,8 @@ enum openssh_key_status {
     OPENSSH_KEY_INCOMPATIBLE,
     OPENSSH_KEY_UNKNOWN_KEYTYPE,
 };
+
+/****************************************************************************************/
 
 /* allocate and free */
 struct opensshkey * newopensshkey  (int type);

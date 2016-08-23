@@ -7,6 +7,8 @@
 #include "utils.h"
 #include "base64.h"
 
+/****************************************************************************************/
+
 /* size constraints */
 #define BUFFER_ALLOCATION_INITIAL                512  /*   512 B */
 #define BUFFER_ALLOCATION_INCREMENT             2048  /*   2 KiB */
@@ -32,6 +34,8 @@ enum buffer_status {
 
 /* opaque struct */
 struct buffer;
+
+/****************************************************************************************/
 
 /* allocate and free buffers */
 struct buffer * newbuffer   ();

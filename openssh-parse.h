@@ -4,6 +4,8 @@
 #include "buffer.h"
 #include "openssh-key.h"
 
+/****************************************************************************************/
+
 /* openssh-key-v1 file constants */
 #define OPENSSH_KEY_V1_MARK_BEGIN       "-----BEGIN OPENSSH PRIVATE KEY-----\n"
 #define OPENSSH_KEY_V1_MARK_BEGIN_LEN   ( sizeof(OPENSSH_KEY_V1_MARK_BEGIN) - 1 )
@@ -50,6 +52,8 @@ enum openssh_parse_status {
     OPENSSH_PARSE_ALLOCATION_FAILURE,
     OPENSSH_PARSE_INTERNAL_ERROR,
 };
+
+/****************************************************************************************/
 
 /* decode a filebuffer */
 int openssh_key_v1_parse (struct buffer *filebuf, struct opensshkey **keyptr);

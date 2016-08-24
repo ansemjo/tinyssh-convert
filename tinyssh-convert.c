@@ -1,29 +1,10 @@
 /*
- * MIT License
- *
- * Copyright (c) 2016 Anton Semjonov
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * This file is governed by "the MIT License", which should be
+ * included in a LICENSE file in all copies of this project.
  *
  * Description:
- * This software converts existing ed25519 keys from OpenSSH format to the TinySSH format.
- * TinySSH is a small SSH server put into public domain [https://tinyssh.org/].
+ * This software converts existing ed25519 keys from OpenSSH format 
+ * (openssh-key-v1) to the simple TinySSH binary format.
  */
 
  #define USAGE_MESSAGE \
@@ -58,7 +39,7 @@ int have_destfn = 0;
 
 int main(int argc, char **argv)
 {
-	int opt;
+	int opt, e;
 	extern char *optarg;
 
     /* parse arguments */
@@ -67,15 +48,15 @@ int main(int argc, char **argv)
 
         /* filename */
         case 'f':
-			if (strncpy(sourcefn, optarg, sizeof(sourcefn)) == NULL)
-				fatal(FAILURE, "privatekey filename too long");
+			if (strncpy(sourcefn, optarg, sizeof sourcefn) == NULL)
+				fatal(ERR_BAD_ARGUMENT, "privatekey filename too long");
 			have_sourcefn = 1;
             break;
 
         /* destination directory */
         case 'd':
-			if (strncpy(destfn, optarg, sizeof(destfn)) == NULL)
-			    fatal(FAILURE, "destination directory name too long");
+			if (strncpy(destfn, optarg, sizeof destfn) == NULL)
+			    fatal(ERR_BAD_ARGUMENT, "destination directory name too long");
 			have_destfn = 1;
 			break;
 
@@ -90,13 +71,34 @@ int main(int argc, char **argv)
     if (!have_sourcefn)
         prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt");
 
-    for (int err = 0; err < STATUSMAX; err++)
-        eprintf("%3d %s = %s\n", err, elabel(err), ereason(err));
-    fatale(0);
+    /* how to successfully put hex data into new buf */
+    struct buffer *hexbuf;
+    if (buffer_new_from_data(&hexbuf, "\0\0\0\0", 4) == SUCCESS)
+        buffer_dump(hexbuf);
+
+
+    /* test buffers for strings */
+    struct buffer *b = newbuffer();
+    buffer_put_string(b, "12345678");
+    buffer_put_string(b, "ABCDEFGH");
+    buffer_put_string(b, "\xFF");
+    buffer_put_string(b, USAGE_MESSAGE);
+
+    struct buffer *concat;
+    if (buffer_new_concat_strings(&concat, b) == SUCCESS)
+        buffer_dump(concat);
+
+    size_t slen = 0;
+    unsigned char *str;
+    if ((e = buffer_read_string(concat, &str, &slen, '\0')) == SUCCESS)
+        printf("read %lu bytes string from buffer: %s\n", slen, str);
+
+//    sshbuf_put_cstring
+
+    fatale(SUCCESS);
 
     /* load to buffer */
     struct buffer *filebuffer;
-    int e;
     if ((e = loadfile(sourcefn, &filebuffer)) != 0)
         printf("loadfile error: %d", e);
 

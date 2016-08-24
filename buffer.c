@@ -43,7 +43,7 @@ struct buffer *newbuffer ()
         return NULL;
     
     /* set initial allocation size & allocate data */
-    new->allocation = BUFFER_ALLOCATION_INITIAL;
+    new->allocation = BUFFER_ALLOCATION_INCREMENT;
     if ( (new->data = zalloc(new->allocation)) == NULL ) {
         free(new);
         return NULL;
@@ -81,10 +81,10 @@ void resetbuffer (struct buffer *buf)
     buf->offset = buf->size = 0;
 
     /* realloc if larger than initial */
-    if (buf->allocation != BUFFER_ALLOCATION_INITIAL) {
-        if ((newdata = realloc(buf->data, BUFFER_ALLOCATION_INITIAL)) != NULL) {
+    if (buf->allocation != BUFFER_ALLOCATION_INCREMENT) {
+        if ((newdata = realloc(buf->data, BUFFER_ALLOCATION_INCREMENT)) != NULL) {
             buf->data = newdata;
-            buf->allocation = BUFFER_ALLOCATION_INITIAL;
+            buf->allocation = BUFFER_ALLOCATION_INCREMENT;
         }
     }
 
@@ -112,13 +112,17 @@ void freebuffer_paranoid (struct buffer *buf)
 /* | put new data in | */
 /* +-----------------+ */
 
-/* reserve space for new data and return pointer */
+/* reserve space for new data. if request_ptr given, increase 'used' space and return pointer */
 int buffer_reserve (struct buffer *buf, size_t request_size, unsigned char **request_ptr)
 {
     size_t needed_size;
     unsigned char *newdata;
 
-    if (request_ptr != NULL) *request_ptr = NULL;
+    if (buf == NULL)
+        return ERR_NULLPTR;
+
+    if (request_ptr != NULL)
+        *request_ptr = NULL;
 
     /* calculate next largest increment of the needed new size */
     needed_size = roundup(request_size + buf->size, BUFFER_ALLOCATION_INCREMENT);
@@ -139,11 +143,13 @@ int buffer_reserve (struct buffer *buf, size_t request_size, unsigned char **req
         buf->data = newdata;
     }
 
-    /* adjust 'used' size of buffer and return pointer */
-    newdata = buf->data + buf->size;
-    buf->size += request_size;
-
-    if (request_ptr != NULL) *request_ptr = newdata;
+    /* adjust 'used' size of buffer and return pointer if request_ptr given */
+    /* otherwise this is purely size-checking and realloc'ing */
+    if (request_ptr != NULL) {
+        newdata = buf->data + buf->size;
+        buf->size += request_size;
+        *request_ptr = newdata;
+    }
     return SUCCESS;
 }
 
@@ -153,7 +159,7 @@ int buffer_put (struct buffer *buf, const void *data, size_t datalength)
     unsigned char *put;
     int e = FAILURE;
 
-    if (data == NULL)
+    if (data == NULL || buf == NULL)
         return ERR_NULLPTR;
 
     /* reserve space */
@@ -210,7 +216,7 @@ int buffer_put_decoded_base64 (struct buffer *buf, const char *base64string)
     if (encoded_len == 0)
         return SUCCESS;
 
-    /* allocate memory for decoded string */
+    /* allocate memory for decoded data */
     if ((decoded = malloc(encoded_len)) == NULL)
         return BUFFER_MALLOC_FAILED;
 
@@ -218,7 +224,7 @@ int buffer_put_decoded_base64 (struct buffer *buf, const char *base64string)
     if ((decoded_len = base64_decode(base64string, decoded, encoded_len)) < 0) {
         e = BUFFER_INVALID_FORMAT;
     } else { /* if successful */
-        /* put decoded string into buffer */
+        /* put decoded data into buffer */
         e = buffer_put(buf, decoded, decoded_len);
     }
 
@@ -226,6 +232,39 @@ int buffer_put_decoded_base64 (struct buffer *buf, const char *base64string)
     free(decoded);
 
     return e;
+}
+
+/* put a string of data with prefixed u32 length */
+int buffer_put_data (struct buffer *buf, void *data, size_t length)
+{
+    int e = FAILURE;
+
+    if (buf == NULL || data == NULL)
+        return ERR_NULLPTR;
+
+    /* check length requirement / reserve space */
+    if ((e = buffer_reserve(buf, length + 4, NULL)) != SUCCESS)
+        return e;
+    
+    /* put length and string */
+    if ((e = buffer_put_u32(buf, length)) != SUCCESS ||
+        (e = buffer_put(buf, data, length)) != SUCCESS)
+        return e;
+
+    return e;
+}
+
+/* put a character string */
+int buffer_put_string (struct buffer *buf, unsigned char *string)
+{
+    if (buf == NULL || string == NULL)
+        return ERR_NULLPTR;
+
+    /* get stringlength */
+    size_t length = strlen(string);
+
+    /* put string into buffer */
+    return buffer_put_data(buf, string, length);
 }
 
 
@@ -289,8 +328,14 @@ int buffer_get_stringptr (const struct buffer *buf, const unsigned char **string
     *stringlen = 0;
 
     /* check length in buffer */
-    if (buffer_get_remaining(buf) < 4)
+    size_t remain = 0;
+    if ((remain = buffer_get_remaining(buf)) < 4) {
+        /* end of buffer */
+        if (remain == 0)
+            return BUFFER_END_OF_BUF;
+        /* or incomplete message */
         return BUFFER_INCOMPLETE_MESSAGE;
+    }
 
     /* get length of string */
     length = decode_uint32(pointer);
@@ -308,6 +353,12 @@ int buffer_get_stringptr (const struct buffer *buf, const unsigned char **string
     return SUCCESS;
 }
 
+/* inline nullcharcheck */
+static inline int buffer_nullcharcheck (const unsigned char *data, size_t length, const char *nullchar) {
+    unsigned char *find;
+    return ( length > 0 && (find = memchr(data, *nullchar, length)) != NULL && find < data + length - 1);
+}
+
 /* read string and optionally check for continuity in respect to given nullchar */
 int buffer_read_string (struct buffer *buf, unsigned char **stringptr, size_t *lengthptr, char *nullchar)
 {
@@ -323,13 +374,9 @@ int buffer_read_string (struct buffer *buf, unsigned char **stringptr, size_t *l
     if ((e = buffer_get_stringptr(buf, &string, &length)) != SUCCESS)
         return e;
     
-    /* if nullchar given, check that it only appears at the end */
-    if (nullchar != NULL) {
-        if ( length > 0 &&
-            (nullcharfind = memchr(string, *nullchar, length)) != NULL &&
-             nullcharfind < string + length - 1)
-                return BUFFER_INVALID_FORMAT;
-    }
+    /* if nullchar given, check that it does not appear within */
+    if (nullchar != NULL && !buffer_nullcharcheck(string, length, nullchar))
+        return BUFFER_INVALID_FORMAT;
 
     /* advance offset */
     if (buffer_add_offset(buf, length + 4))
@@ -368,32 +415,102 @@ int buffer_read_string (struct buffer *buf, unsigned char **stringptr, size_t *l
 /* | create from other formats | */
 /* +---------------------------+ */
 
-/* create a new buffer from a given string */
-int buffer_new_from_string (struct buffer **buf, const char *string, size_t strlen)
+/* create a new buffer from a given datastring */
+int buffer_new_from_data (struct buffer **newbuf, const char *data, size_t datalen)
 {
-    if (buf != NULL)
-        *buf = NULL;
+    int e = FAILURE;
+
+    if (newbuf != NULL)
+        *newbuf = NULL;
     
-    if (string == NULL)
+    if (data == NULL)
         return ERR_NULLPTR;
     
     /* allocate new */
-    if ((*buf = newbuffer()) == NULL)
+    if ((*newbuf = newbuffer()) == NULL)
         return BUFFER_ALLOCATION_FAILED;
 
-    return buffer_put(*buf, string, strlen);    
+    /* put in data and free on failure */
+    if ((e = buffer_put(*newbuf, data, datalen)) != SUCCESS)
+        freebuffer(*newbuf);
+    return e;    
 }
 
 /* create a new buffer from the remaining data in a given buffer */
-int buffer_new_from_buffer (struct buffer **buf, const struct buffer *sourcebuf)
+int buffer_new_from_buffer (struct buffer **newbuf, const struct buffer *sourcebuf)
 {
-    if (buf != NULL)
-        *buf = NULL;
-
     if (sourcebuf == NULL)
         return ERR_NULLPTR;
     
-    return buffer_new_from_string(buf, buffer_get_offsetptr(sourcebuf), buffer_get_remaining(sourcebuf));
+    return buffer_new_from_data(newbuf, buffer_get_offsetptr(sourcebuf), buffer_get_remaining(sourcebuf));
+}
+
+/* create a new buffer from a concatenation of all datastrings in a buffer */
+int buffer_new_concat_data (struct buffer **newbuf, struct buffer *sourcebuf, const char *nullchar)
+{
+    int e = FAILURE;
+
+    /* create new buffer with four empty bytes at the beginning */
+    if ((e = buffer_new_from_data(newbuf, "\0\0\0\0", 4)) != SUCCESS)
+        return e;
+
+    /* variables to concatenate data */
+    const unsigned char *concatptr;
+    size_t concatlen = 0, accumlength = 0;
+
+    /* loop to collect all datastrings, assuming there are only datastrings */
+    while (e != BUFFER_END_OF_BUF) {
+
+        /* read next pointer, switch by status */
+        switch (e = buffer_get_stringptr(sourcebuf, &concatptr, &concatlen)) {
+
+            /* there is another string */
+            case SUCCESS:
+                /* if nullchar given, check that it does not appear within */
+                if (nullchar != NULL && !buffer_nullcharcheck(concatptr, concatlen, nullchar))
+                    cleanreturn(BUFFER_INVALID_FORMAT);
+                
+                /* advance offset */
+                if (buffer_add_offset(sourcebuf, concatlen + 4))
+                    cleanreturn(BUFFER_INTERNAL_ERROR);
+
+                /* put data into new buffer */
+                if ((e = buffer_put(*newbuf, concatptr, concatlen)) != SUCCESS)
+                    cleanreturn(e);
+
+                /* increment accumulated length */
+                accumlength += concatlen;
+
+                /* great, next string */
+                continue;
+
+            /* end reached cleanly */
+            case BUFFER_END_OF_BUF:
+                break;
+
+            /* any other error */
+            default:
+                cleanreturn(e);
+                break;
+        }
+    }
+    e = SUCCESS;
+    /* on clean end of buffer, write accumulated length to first 4 bytes */
+    encode_uint32(buffer_get_dataptr(*newbuf), accumlength);
+
+    cleanup:
+        if (e != SUCCESS) {
+            freebuffer(*newbuf);
+            *newbuf = NULL;
+        }
+    
+    return e;
+}
+
+/* create a new buffer from a concatenation of all charstrings in a buffer */
+int buffer_new_concat_strings (struct buffer **newbuf, struct buffer *sourcebuf)
+{
+    return buffer_new_concat_data(newbuf, sourcebuf, '\0');
 }
 
 /* +-----------------------+ */
@@ -448,12 +565,12 @@ size_t buffer_get_remaining (const struct buffer *buf)
 void buffer_dump (const struct buffer *buf) {
     if (buf != NULL) { 
         debugbuf("STRUCT", (unsigned char *)buf, sizeof(struct buffer));
-    #include <stdio.h> /* TODO some these function shall be removed sometime */ 
-    printf("%s%p\n%s%lu bytes\n%s%lu bytes\n%s+%lu = %p\n",
-            "data address:   ", buf->data,
-            "allocation:     ", buf->allocation,
-            "data length:    ", buf->size,
-            "offset:         ", buf->offset, buf->data + buf->offset);
+        #include <stdio.h> /* TODO some these function shall be removed sometime */ 
+        printf("%s%p\n%s%lu bytes\n%s%lu bytes\n%s+%lu = %p\n",
+                "data address:   ", buf->data,
+                "allocation:     ", buf->allocation,
+                "data length:    ", buf->size,
+                "offset:         ", buf->offset, buf->data + buf->offset);
         if (buf->data != NULL) debugbuf("BUFFER DATA", buf->data, buf->size);
     }
 }

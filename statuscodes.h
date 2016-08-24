@@ -3,10 +3,11 @@
 
 /* general statuscodes */
 #define MISC_STATUS(fn) \
-    fn( SUCCESS,        Everything is fine.                     ),\
-    fn( FAILURE,        An unspecified error occured.           ),\
-    fn( ERR_USAGE,      Wrong usage of program.                 ),\
-    fn( ERR_NULLPTR,    Nullpointer in a non-optional argument. )
+    fn( SUCCESS,            Everything is fine.                                 ),\
+    fn( FAILURE,            An unspecified error occured.                       ),\
+    fn( ERR_USAGE,          Wrong usage of program.                             ),\
+    fn( ERR_NULLPTR,        Nullpointer in a non-optional argument.             ),\
+    fn( ERR_BAD_ARGUMENT,   A given argument could not be processed correctly.  )
 
 /* statuscodes for buffer.h */
 #define BUFFER_STATUS(fn) \
@@ -17,6 +18,7 @@
     fn( BUFFER_MALLOC_FAILED,           A buffer function failed to allocate memory.                    ),\
     fn( BUFFER_REALLOC_FAILED,          A buffer resize/realloc failed.                                 ),\
     fn( BUFFER_OFFSET_TOO_LARGE,        Requested offset goes beyond the current size of a buffer.      ),\
+    fn( BUFFER_END_OF_BUF,              Reached end of buffer when trying to read.                      ),\
     fn( BUFFER_INCOMPLETE_MESSAGE,      Message size does not match with the encoded length.            ),\
     fn( BUFFER_INVALID_FORMAT,          A function received ill-formatted data.                         )
 

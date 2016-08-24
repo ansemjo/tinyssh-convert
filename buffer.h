@@ -1,3 +1,11 @@
+/*
+ * This file is governed by Licenses which are listed in
+ * the LICENSE file, which shall be included in all copies
+ * and redistributions of this project.
+ *
+ * For additional notices see the file buffer.c
+ */
+
 #ifndef _headerguard_buffer_h_
 #define _headerguard_buffer_h_
 

@@ -1,10 +1,7 @@
 /*
- * This file is governed by "the MIT License", which should be
- * included in a LICENSE file in all copies of this project.
- *
- * Description:
- * This software converts existing ed25519 keys from OpenSSH format 
- * (openssh-key-v1) to the simple TinySSH binary format.
+ * This file is governed by Licenses which are listed in
+ * the LICENSE file, which shall be included in all copies
+ * and redistributions of this project.
  */
 
  #define USAGE_MESSAGE \
@@ -35,8 +32,10 @@ int have_sourcefn = 0;
 char destfn[1024];
 int have_destfn = 0;
 
+/* buffer to load private key */
 struct buffer *filebuffer = NULL;
 
+/* structure to hold deserialized private key */
 struct opensshkey *privatekey = NULL;
 
 /* ======  MAIN  ====== */

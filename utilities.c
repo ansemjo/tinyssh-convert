@@ -1,5 +1,10 @@
-#include "utilities.h"
+/*
+ * This file is governed by Licenses which are listed in
+ * the LICENSE file, which shall be included in all copies
+ * and redistributions of this project.
+ */
 
+#include "utilities.h"
 
 /* check if a string is not zero and not empty */
 extern int strnzero (const char *str) {
@@ -8,6 +13,12 @@ extern int strnzero (const char *str) {
     return 0;
 }
 
+/* The prompt function is based on ask_filename from:
+ * $OpenBSD: ssh-keygen.c,v 1.290 2016/05/02 09:36:42 djm Exp $
+ *
+ * Original Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>,
+ *                        Espoo, Finland  All rights reserved
+ */
 
 /* prompt for user input */
 extern int prompt (const char *promptmsg, char *dest, size_t dest_len, const char *defaultval) {

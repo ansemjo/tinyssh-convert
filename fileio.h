@@ -1,3 +1,11 @@
+/*
+ * This file is governed by Licenses which are listed in
+ * the LICENSE file, which shall be included in all copies
+ * and redistributions of this project.
+ *
+ * For additional notices see the file fileio.c
+ */
+
 #ifndef _headerguard_fileio_h_
 #define _headerguard_fileio_h_
 

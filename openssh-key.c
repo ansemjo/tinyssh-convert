@@ -1,3 +1,9 @@
+/*
+ * This file is governed by Licenses which are listed in
+ * the LICENSE file, which shall be included in all copies
+ * and redistributions of this project.
+ */
+
 #include "openssh-key.h"
 
 /* opaque EC_KEY + ECDSA NIDs to make it compile for now .. */

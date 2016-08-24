@@ -1,3 +1,9 @@
+/*
+ * This file is governed by Licenses which are listed in
+ * the LICENSE file, which shall be included in all copies
+ * and redistributions of this project.
+ */
+
 #ifndef _headerguard_utilities_h_
 #define _headerguard_utilities_h_
 

@@ -1,3 +1,11 @@
+/*
+ * This file is governed by Licenses which are listed in
+ * the LICENSE file, which shall be included in all copies
+ * and redistributions of this project.
+ *
+ * For additional notices see the file openssh-parse.c
+ */
+
 #ifndef _headerguard_openssh_parse_h_
 #define _headerguard_openssh_parse_h_
 

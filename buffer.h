@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 #include "errors.h"
-#include "utils.h"
+#include "utilities.h"
 #include "base64.h"
 
 /****************************************************************************************/

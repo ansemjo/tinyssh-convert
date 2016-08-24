@@ -40,7 +40,7 @@
 
 /* local includes */
 #include "errors.h"
-#include "utils.h"
+#include "utilities.h"
 #include "fileio.h"
 #include "buffer.h"
 #include "openssh-parse.h"

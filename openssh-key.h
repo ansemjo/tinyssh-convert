@@ -7,7 +7,7 @@
 /* for debugging printf */
 #include <stdio.h>
 
-#include "utils.h"
+#include "utilities.h"
 #include "buffer.h"
 #include "fileio.h"
 

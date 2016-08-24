@@ -1,5 +1,5 @@
-#ifndef _headerguard_utils_h_
-#define _headerguard_utils_h_
+#ifndef _headerguard_utilities_h_
+#define _headerguard_utilities_h_
 
 #include <stdio.h>
 #include <stdlib.h>

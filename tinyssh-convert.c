@@ -5,7 +5,7 @@
  */
 
  #define USAGE_MESSAGE \
-    "Usage: tinyssh-convert [-f keyfile] [-d destination_dir]\n" \
+    "Usage: " PACKAGE_NAME " [-hv] [-f keyfile] [-d destination_dir]\n" \
     "Convert an OpenSSH ed25510 privatekey file to TinySSH\n" \
     "compatible format keys and save them in destination_dir."
 
@@ -25,10 +25,12 @@
 #include "openssh-key.h"
 
 /* the secretkey filename */
+#define SOURCEFN_DEFAULT "/etc/ssh/ssh_host_ed25519_key"
 char sourcefn[1024];
 int have_sourcefn = 0;
 
 /* the destination directory */
+#define DESTFN_DEFAULT "/etc/tinyssh/sshkeydir"
 char destfn[1024];
 int have_destfn = 0;
 
@@ -46,7 +48,7 @@ int main(int argc, char **argv)
 	extern char *optarg;
 
     /* parse arguments */
-	while ((opt = getopt(argc, argv, "?hf:d:")) != -1) {
+	while ((opt = getopt(argc, argv, "?hvf:d:")) != -1) {
 		switch (opt) {
 
         /* filename */
@@ -62,6 +64,12 @@ int main(int argc, char **argv)
 			    fatale(ERR_BAD_ARGUMENT);
 			have_destfn = 1;
 			break;
+        
+        /* version display */
+        case 'v':
+            printf("%s v%s [%s]\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_URL);
+            exit(0);
+            break;
 
         case 'h':
 		case '?':
@@ -72,7 +80,7 @@ int main(int argc, char **argv)
 
     /* prompt for source if not given */
     if (!have_sourcefn &&
-        (e = prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt")) != SUCCESS)
+        (e = prompt ("Enter a source filename", sourcefn, sizeof sourcefn, SOURCEFN_DEFAULT)) != SUCCESS)
             cleanreturn(e);
 
     /* load to buffer */
@@ -85,7 +93,7 @@ int main(int argc, char **argv)
 
     /* ask for destination */
     if (!have_destfn &&
-        (e = prompt ("Enter a destination filename", destfn, sizeof destfn, "/tmp")) != SUCCESS)
+        (e = prompt ("Enter a destination directory", destfn, sizeof destfn, DESTFN_DEFAULT)) != SUCCESS)
             cleanreturn(e);
 
     /* export tinyssh keys */

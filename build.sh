@@ -6,8 +6,9 @@
 
 name=${1:-tinyssh-convert}
 
-err() { >&2 printf '\e[1mERR!\e[0m  %s\n' "$*"; exit 1; }
+say() { X=$1; shift; printf '\e[1m%s\e[0m  ' "$X"; printf "$@"; printf '\n'; }
+err() { >&2 say 'ERR!' "$1"; exit 1; }
 
 gcc -g -o "${name}" *.c || err "compilation failed!"
 
-printf '\e[1m%s\e[0m %s%q\n' 'SUCCESS!' 'Compiled file is saved in: ' "./${name}"
+say 'SUCCESS!' 'Compiled file is saved in: %s' "./${name}"

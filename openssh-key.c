@@ -232,11 +232,11 @@ int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned cha
     if (seckey != NULL && pubkey != NULL) {
         /* secret key */
         printf("writing seckey to: %s ...\n", seckey_file);
-        if ((e = savestring(seckey_file, seckey, seckey_len)) != FILEOPS_SUCCESS)
+        if ((e = savestring(seckey_file, seckey, seckey_len)) != SUCCESS)
             cleanreturn(e);
         /* public key */
         printf("writing pubkey to: %s ...\n", pubkey_file);
-        if ((e = savestring(pubkey_file, pubkey, pubkey_len)) != FILEOPS_SUCCESS)
+        if ((e = savestring(pubkey_file, pubkey, pubkey_len)) != SUCCESS)
             cleanreturn(e);
     }
     

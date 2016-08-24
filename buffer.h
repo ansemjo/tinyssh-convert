@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "errors.h"
 #include "utils.h"
 #include "base64.h"
 
@@ -14,23 +15,7 @@
 #define BUFFER_ALLOCATION_INCREMENT             2048  /*   2 KiB */
 #define BUFFER_ALLOCATION_MAXIMUM       64*1024*1024  /*  64 MiB */
 
-/* status codes */
-enum buffer_status {
-    BUFFER_SUCCESS = 0,
-    BUFFER_FAILURE = 1,
- /* errors */
-    BUFFER_NULLPOINTER,
-    BUFFER_INTERNAL_ERROR,
-    BUFFER_LENGTH_OVER_MAXIMUM,
-    BUFFER_MEMCPY_FAIL,
-    BUFFER_ALLOCATION_FAILED,
-    BUFFER_MALLOC_FAILED,
-    BUFFER_REALLOC_FAILED,
-    BUFFER_MEMCPY_FAILED,
-    BUFFER_OFFSET_TOO_LARGE,
-    BUFFER_INCOMPLETE_MESSAGE,
-    BUFFER_INVALID_FORMAT,
-};
+/* statuscodes are defined in statuscodes.h */
 
 /* opaque struct */
 struct buffer;

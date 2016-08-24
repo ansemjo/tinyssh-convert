@@ -28,7 +28,7 @@ int openssh_key_v1_parse (struct buffer *filebuf, struct opensshkey **keyptr)
     while (rawlen > 0) {
         /* skip whitespace, put into buffer otherwise */
         if (*rawptr != '\n' && *rawptr != '\r')
-            if ((e = buffer_put_char(encoded, *rawptr)) != BUFFER_SUCCESS)
+            if ((e = buffer_put_char(encoded, *rawptr)) != SUCCESS)
                 cleanreturn(e);
 
         lastchar = *rawptr;
@@ -42,7 +42,7 @@ int openssh_key_v1_parse (struct buffer *filebuf, struct opensshkey **keyptr)
                 memcmp(rawptr, OPENSSH_KEY_V1_MARK_END, OPENSSH_KEY_V1_MARK_END_LEN) == 0) {
                     
                     /* end marker matched, terminate with a nullchar */
-                    if ((e = buffer_put_char(encoded, '\0')) != BUFFER_SUCCESS)
+                    if ((e = buffer_put_char(encoded, '\0')) != SUCCESS)
                         cleanreturn(e);
                     break;
                 }
@@ -53,13 +53,13 @@ int openssh_key_v1_parse (struct buffer *filebuf, struct opensshkey **keyptr)
         cleanreturn(OPENSSH_PARSE_INVALID_FORMAT);
 
     /* base64 decode the buffer */
-    if ((e = buffer_put_decoded_base64(decoded, (char *)buffer_get_dataptr(encoded)) ) != BUFFER_SUCCESS)
+    if ((e = buffer_put_decoded_base64(decoded, (char *)buffer_get_dataptr(encoded)) ) != SUCCESS)
         cleanreturn(e);
 
     /* check magic bytes */
     if (buffer_get_remaining(decoded) < OPENSSH_KEY_V1_MAGICBYTES_LEN ||
         memcmp(buffer_get_dataptr(decoded), OPENSSH_KEY_V1_MAGICBYTES, OPENSSH_KEY_V1_MAGICBYTES_LEN) ||
-        buffer_add_offset(decoded, OPENSSH_KEY_V1_MAGICBYTES_LEN) != BUFFER_SUCCESS)
+        buffer_add_offset(decoded, OPENSSH_KEY_V1_MAGICBYTES_LEN) != SUCCESS)
             cleanreturn(OPENSSH_PARSE_INVALID_FORMAT);
 
     /* 
@@ -73,17 +73,17 @@ int openssh_key_v1_parse (struct buffer *filebuf, struct opensshkey **keyptr)
     if (/*   reading function     buffer   target        len   nullchar   expected status */
         
         /* cipher name */
-        (e = buffer_read_string ( decoded, &ciphername,  NULL, '\0' )) != BUFFER_SUCCESS ||
+        (e = buffer_read_string ( decoded, &ciphername,  NULL, '\0' )) != SUCCESS ||
         /* kdf name */
-        (e = buffer_read_string ( decoded, &kdfname,     NULL, '\0' )) != BUFFER_SUCCESS ||
+        (e = buffer_read_string ( decoded, &kdfname,     NULL, '\0' )) != SUCCESS ||
         /* skip kdf options */
-        (e = buffer_read_string ( decoded, NULL,         NULL, NULL )) != BUFFER_SUCCESS ||
+        (e = buffer_read_string ( decoded, NULL,         NULL, NULL )) != SUCCESS ||
         /* number of keys */
-        (e = buffer_read_u32    ( decoded, &nkeys                   )) != BUFFER_SUCCESS ||
+        (e = buffer_read_u32    ( decoded, &nkeys                   )) != SUCCESS ||
         /* skip public key */
-        (e = buffer_read_string ( decoded, NULL,         NULL, NULL )) != BUFFER_SUCCESS ||
+        (e = buffer_read_string ( decoded, NULL,         NULL, NULL )) != SUCCESS ||
         /* privatekey blob length */
-        (e = buffer_read_u32    ( decoded, &privatelen              )) != BUFFER_SUCCESS
+        (e = buffer_read_u32    ( decoded, &privatelen              )) != SUCCESS
     
     ) cleanreturn(e);
 
@@ -109,13 +109,13 @@ int openssh_key_v1_parse (struct buffer *filebuf, struct opensshkey **keyptr)
      *  is not supported here. openssh's decryption with no cipher
      *  degrades to a simple memcpy into a new buffer.
      */
-    if ((e = buffer_new_from_buffer(&privatekeyblob, decoded)) != BUFFER_SUCCESS)
+    if ((e = buffer_new_from_buffer(&privatekeyblob, decoded)) != SUCCESS)
         cleanreturn(BUFFER_ALLOCATION_FAILED);
 
     /* verify that both checkint fields hold the same value */
     unsigned long check1, check2;
-    if ((e = buffer_read_u32(privatekeyblob, &check1)) != BUFFER_SUCCESS ||
-        (e = buffer_read_u32(privatekeyblob, &check2)) != BUFFER_SUCCESS)
+    if ((e = buffer_read_u32(privatekeyblob, &check1)) != SUCCESS ||
+        (e = buffer_read_u32(privatekeyblob, &check2)) != SUCCESS)
             cleanreturn(e); 
     if (check1 != check2)
         cleanreturn(OPENSSH_PARSE_INVALID_PRIVATE_FORMAT);
@@ -182,7 +182,7 @@ int openssh_deserialize_private (struct buffer *buf, struct opensshkey **keyptr)
     /* detect key type */
     int keytype;
     unsigned char *keytypename = NULL; 
-    if ((e = buffer_read_string(buf, &keytypename, NULL, '\0')) != BUFFER_SUCCESS)
+    if ((e = buffer_read_string(buf, &keytypename, NULL, '\0')) != SUCCESS)
         cleanreturn(e);
     if ((keytype = opensshkey_detect_type (keytypename)) == KEY_UNKNOWN)
         cleanreturn(OPENSSH_PARSE_UNSUPPORTED_KEY_TYPE);
@@ -203,8 +203,8 @@ int openssh_deserialize_private (struct buffer *buf, struct opensshkey **keyptr)
                 cleanreturn(OPENSSH_PARSE_ALLOCATION_FAILURE);
 
             /* get public and private key from buffer */
-            if ((e = buffer_read_string(buf, &ed25519_pk, &pk_len, NULL)) != BUFFER_SUCCESS ||
-                (e = buffer_read_string(buf, &ed25519_sk, &sk_len, NULL)) != BUFFER_SUCCESS)
+            if ((e = buffer_read_string(buf, &ed25519_pk, &pk_len, NULL)) != SUCCESS ||
+                (e = buffer_read_string(buf, &ed25519_sk, &sk_len, NULL)) != SUCCESS)
                     cleanreturn(e);
 
             /* check read key lengths */

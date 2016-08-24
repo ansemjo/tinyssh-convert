@@ -11,20 +11,7 @@
 
 /****************************************************************************************/
 
-/* status codes */
-enum fileops_status {
-    FILEOPS_SUCCESS =    0,
-    FILEOPS_FAILURE = -100,
- /* general errors */
-    FILEOPS_NULLPOINTER,
- /* handling files */
-    FILEOPS_CANNOT_OPEN_READING,
-    FILEOPS_CANNOT_OPEN_WRITING,
-    FILEOPS_IOERROR,
-    FILEOPS_INCOMPLETE_WRITE,
- /* buffer related */
-    FILEOPS_ALLOCATION_FAIL,
-};
+/* status codes are defined in statuscodes.h */
 
 /* chunk at once before putting it into buffer struct */
 #define FILEOPS_CHUNKSIZE 1024

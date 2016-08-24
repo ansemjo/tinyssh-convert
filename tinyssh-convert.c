@@ -90,8 +90,9 @@ int main(int argc, char **argv)
     if (!have_sourcefn)
         prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt");
 
-    fatal(255, "DEBUGGING ...\n");
-
+    for (int err = 0; err < STATUSMAX; err++)
+        eprintf("%s = %s\n", elabel(err), ereason(err));
+    fatale(0);
 
     /* load to buffer */
     struct buffer *filebuffer;
@@ -125,7 +126,7 @@ int main(int argc, char **argv)
     int pattern[] = {0xAE, 0xFF, 0x13, 0xF0};
 
     for (int i = 0; i < sizeof *length; i++) {
-        if (buffer_reserve(newbuff, length[i], &newdata) == BUFFER_SUCCESS)
+        if (buffer_reserve(newbuff, length[i], &newdata) == SUCCESS)
             memset(newdata, pattern[i], length[i]);
     }
 

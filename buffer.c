@@ -144,20 +144,20 @@ int buffer_reserve (struct buffer *buf, size_t request_size, unsigned char **req
     buf->size += request_size;
 
     if (request_ptr != NULL) *request_ptr = newdata;
-    return BUFFER_SUCCESS;
+    return SUCCESS;
 }
 
 /* put new data into buffer */
 int buffer_put (struct buffer *buf, const void *data, size_t datalength)
 {
     unsigned char *put;
-    int e = BUFFER_FAILURE;
+    int e = FAILURE;
 
     if (data == NULL)
-        return BUFFER_NULLPOINTER;
+        return NULLPOINTER;
 
     /* reserve space */
-    if ((e = buffer_reserve(buf, datalength, &put)) != BUFFER_SUCCESS)
+    if ((e = buffer_reserve(buf, datalength, &put)) != SUCCESS)
         return e;
 
     /* copy data */
@@ -165,50 +165,50 @@ int buffer_put (struct buffer *buf, const void *data, size_t datalength)
         return BUFFER_MEMCPY_FAIL;
     
     /* success */
-    return BUFFER_SUCCESS;
+    return SUCCESS;
 }
 
 /* put a 32 bit unsigned number */
 int buffer_put_u32 (struct buffer *buf, unsigned long value)
 {
-    int e = BUFFER_FAILURE;
+    int e = FAILURE;
     unsigned char *valput;
     
     /* reserve memory */
-    if ((e = buffer_reserve(buf, 4, &valput)) != BUFFER_SUCCESS)
+    if ((e = buffer_reserve(buf, 4, &valput)) != SUCCESS)
         return e;
     
     /* write the value to address */
     encode_uint32(valput, value);
-    return BUFFER_SUCCESS;
+    return SUCCESS;
 }
 
 /* put a 8 bit unsigned char */
 int buffer_put_u8 (struct buffer *buf, unsigned char value)
 {
-    int e = BUFFER_FAILURE;
+    int e = FAILURE;
     unsigned char *valput;
     
     /* reserve memory */
-    if ((e = buffer_reserve(buf, 1, &valput)) != BUFFER_SUCCESS)
+    if ((e = buffer_reserve(buf, 1, &valput)) != SUCCESS)
         return e;
     
     /* write the value to address */
     *valput = value;
-    return BUFFER_SUCCESS;
+    return SUCCESS;
 }
 
 /* decode a base64 string and put it into an existing buffer */
 int buffer_put_decoded_base64 (struct buffer *buf, const char *base64string)
 {
-    int e = BUFFER_FAILURE;
+    int e = FAILURE;
     
     unsigned char *decoded;
     size_t encoded_len = strlen(base64string);
     size_t decoded_len;
 
     if (encoded_len == 0)
-        return BUFFER_SUCCESS;
+        return SUCCESS;
 
     /* allocate memory for decoded string */
     if ((decoded = malloc(encoded_len)) == NULL)
@@ -239,41 +239,41 @@ int buffer_add_offset (struct buffer *buf, size_t length)
         return BUFFER_OFFSET_TOO_LARGE;
     
     buf->offset += length;
-    return BUFFER_SUCCESS;
+    return SUCCESS;
 }
 
 /* get a 32 bit unsigned number */
 int buffer_read_u32 (struct buffer *buf, unsigned long *read)
 {
-    int e = BUFFER_FAILURE;
+    int e = FAILURE;
     unsigned char *tmp = buffer_get_offsetptr(buf);
 
     /* move offset */
-    if ((e = buffer_add_offset(buf, 4)) != BUFFER_SUCCESS)
+    if ((e = buffer_add_offset(buf, 4)) != SUCCESS)
         return e;
     
     /* put number */
     if (read != NULL)
         *read = decode_uint32(tmp);
 
-    return BUFFER_SUCCESS;
+    return SUCCESS;
 }
 
 /* get an 8 bit unsigned number/char */
 int buffer_read_u8 (struct buffer *buf, unsigned char *read)
 {
-    int e = BUFFER_FAILURE;
+    int e = FAILURE;
     unsigned char *tmp = buffer_get_offsetptr(buf);
 
     /* move offset */
-    if ((e = buffer_add_offset(buf, 1)) != BUFFER_SUCCESS)
+    if ((e = buffer_add_offset(buf, 1)) != SUCCESS)
         return e;
     
     /* put number */
     if (read != NULL)
         *read = (unsigned char)*tmp;
 
-    return BUFFER_SUCCESS;
+    return SUCCESS;
 }
 
 /* get pointer and length of next string in buffer */
@@ -284,7 +284,7 @@ int buffer_get_stringptr (const struct buffer *buf, const unsigned char **string
 
     /* check & clear targets */
     if (buf == NULL || stringptr == NULL || stringlen == NULL)
-        return BUFFER_NULLPOINTER; 
+        return NULLPOINTER; 
     *stringptr = NULL;
     *stringlen = 0;
 
@@ -305,7 +305,7 @@ int buffer_get_stringptr (const struct buffer *buf, const unsigned char **string
     *stringptr = pointer + 4;
     *stringlen = length;
 
-    return BUFFER_SUCCESS;
+    return SUCCESS;
 }
 
 /* read string and optionally check for continuity in respect to given nullchar */
@@ -313,14 +313,14 @@ int buffer_read_string (struct buffer *buf, unsigned char **stringptr, size_t *l
 {
     const unsigned char *string, *nullcharfind;
     size_t length;
-    int e = BUFFER_FAILURE;
+    int e = FAILURE;
 
     /* reset targets */
     if (stringptr != NULL) *stringptr = NULL;
     if (lengthptr != NULL) *lengthptr = 0;
     
     /* get pointer and length of string in buffer */
-    if ((e = buffer_get_stringptr(buf, &string, &length)) != BUFFER_SUCCESS)
+    if ((e = buffer_get_stringptr(buf, &string, &length)) != SUCCESS)
         return e;
     
     /* if nullchar given, check that it only appears at the end */
@@ -344,7 +344,7 @@ int buffer_read_string (struct buffer *buf, unsigned char **stringptr, size_t *l
         /* copy string */
         if (length != 0)
             if (memcpy(*stringptr, string, length) == NULL)
-                return BUFFER_MEMCPY_FAILED;
+                return BUFFER_MEMCPY_FAIL;
 
         /* terminate with nullchar */
         (*stringptr)[length] = nullchar != NULL ? *nullchar : '\0';
@@ -354,7 +354,7 @@ int buffer_read_string (struct buffer *buf, unsigned char **stringptr, size_t *l
     if (lengthptr != NULL)
         *lengthptr = length;
 
-    return BUFFER_SUCCESS;
+    return SUCCESS;
 }
 
 /*
@@ -375,7 +375,7 @@ int buffer_new_from_string (struct buffer **buf, const char *string, size_t strl
         *buf = NULL;
     
     if (string == NULL)
-        return BUFFER_NULLPOINTER;
+        return NULLPOINTER;
     
     /* allocate new */
     if ((*buf = newbuffer()) == NULL)
@@ -391,7 +391,7 @@ int buffer_new_from_buffer (struct buffer **buf, const struct buffer *sourcebuf)
         *buf = NULL;
 
     if (sourcebuf == NULL)
-        return BUFFER_NULLPOINTER;
+        return NULLPOINTER;
     
     return buffer_new_from_string(buf, buffer_get_offsetptr(sourcebuf), buffer_get_remaining(sourcebuf));
 }

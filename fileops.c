@@ -54,19 +54,19 @@ extern int io (ssize_t (*rw) (int, void *, size_t), int fd, void *data, size_t d
     }
 
     *iolenptr = iolen;
-    return FILEOPS_SUCCESS;
+    return SUCCESS;
 }
 
 
 /* load a file to buffer */
 extern int loadfile (const char *file, struct buffer **filebuf)
 {
-    int e = FILEOPS_FAILURE;
+    int e = FAILURE;
     int fd;
 
     /* check for nullpointers and reset filebuf */
     if (filebuf == NULL || file == NULL)
-        return FILEOPS_NULLPOINTER;
+        return NULLPOINTER;
     *filebuf = NULL;
     
     /* open file for reading */
@@ -87,17 +87,17 @@ extern int loadfile (const char *file, struct buffer **filebuf)
         e = io (read, fd, readbuf, sizeof readbuf, &readlen);
 
         /* if error or EOF */
-        if (e != FILEOPS_SUCCESS || readlen == 0)
+        if (e != SUCCESS || readlen == 0)
             break;
 
         /* put local into buffer */
-        if ((e = buffer_put(*filebuf, readbuf, readlen)) != BUFFER_SUCCESS)
+        if ((e = buffer_put(*filebuf, readbuf, readlen)) != SUCCESS)
             break;
     }
 
     /* cleanup */
     memzero(readbuf, sizeof readbuf);
-    if (e != FILEOPS_SUCCESS) resetbuffer(*filebuf);
+    if (e != SUCCESS) resetbuffer(*filebuf);
     close(fd);
     return e;
 }
@@ -105,12 +105,12 @@ extern int loadfile (const char *file, struct buffer **filebuf)
 /* save a string as data to a file */
 extern int savestring (const char *file, unsigned char *string, size_t stringlen)
 {
-    int e = FILEOPS_FAILURE;
+    int e = FAILURE;
     int fd;
 
     /* check for nullpointers */
     if (string == NULL || file == NULL)
-        return FILEOPS_NULLPOINTER;
+        return NULLPOINTER;
     
     /* open for writing */
     if ((fd = openwriting(file)) == -1)
@@ -123,7 +123,7 @@ extern int savestring (const char *file, unsigned char *string, size_t stringlen
     e = io ((ssize_t (*) (int, void *, size_t))write, fd, string, stringlen, &writelen);
     
     /* catch errors */
-    if (e != FILEOPS_SUCCESS || writelen != stringlen) {
+    if (e != SUCCESS || writelen != stringlen) {
         close(fd);
         unlink(file);
         return FILEOPS_INCOMPLETE_WRITE;
@@ -140,7 +140,7 @@ extern int savefile (const char *file, struct buffer *filebuf)
 {
     /* check for nullpointers */
     if (filebuf == NULL || file == NULL)
-        return FILEOPS_NULLPOINTER;
+        return NULLPOINTER;
     
     /* get pointer to and size of data to write */
     unsigned char *dataptr = buffer_get_dataptr(filebuf);

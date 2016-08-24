@@ -10,29 +10,31 @@ extern int strnzero (const char *str) {
 
 
 /* prompt for user input */
-extern void prompt (const char *prmt, char *dest, size_t dest_len, const char *df_value) {
+extern int prompt (const char *promptmsg, char *dest, size_t dest_len, const char *defaultval) {
     char buf[dest_len];
     
     /* if default value is given, copy that to dest already */
-    if (strnzero(df_value))
-        snprintf(dest, dest_len, "%s", df_value);
+    if (strnzero(defaultval))
+        snprintf(dest, dest_len, "%s", defaultval);
 
     /* display prompt */
     if (strnzero(dest))
-	    printf("%s [%s]: ", prmt, dest);
+	    printf("%s [%s]: ", promptmsg, dest);
     else
-        printf("%s: ", dest);
+        printf("%s: ", promptmsg);
 	fflush(stdout);
 	
     /* get input from stdin */
     if (fgets(buf, sizeof buf, stdin) == NULL)
-        exit(1); /* TODO is this what we want? */
+        return ERR_BAD_USER_INPUT;
     
     /* find newline and replace by \0 */
 	buf[strcspn(buf, "\n")] = '\0';
 
     /* if the buffer now has nonzero length, copy that to dest */
 	if (strnzero(buf)) strncpy(dest, buf, dest_len);
+
+    return SUCCESS;
 }
 
 

@@ -3,11 +3,12 @@
 
 /* general statuscodes */
 #define MISC_STATUS(fn) \
-    fn( SUCCESS,            Everything is fine.                                 ),\
-    fn( FAILURE,            An unspecified error occured.                       ),\
-    fn( ERR_USAGE,          Wrong usage of program.                             ),\
-    fn( ERR_NULLPTR,        Nullpointer in a non-optional argument.             ),\
-    fn( ERR_BAD_ARGUMENT,   A given argument could not be processed correctly.  )
+    fn( SUCCESS,                Everything is fine.                                 ),\
+    fn( FAILURE,                An unspecified error occured.                       ),\
+    fn( ERR_USAGE,              Wrong usage of program.                             ),\
+    fn( ERR_NULLPTR,            Nullpointer in a non-optional argument.             ),\
+    fn( ERR_BAD_ARGUMENT,       A given argument could not be processed correctly.  ),\
+    fn( ERR_BAD_USER_INPUT,     A user-supplied value could not be processed.       )
 
 /* statuscodes for buffer.h */
 #define BUFFER_STATUS(fn) \

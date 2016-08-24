@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "errors.h"
+
 /****************************************************************************************/
 
 /* allocate zero-initialised */
@@ -23,7 +25,7 @@ static void * (* const volatile volatile_memset)(void *,  int, size_t) = memset;
 extern int strnzero (const char *str);
 
 /* prompt for user input */
-extern void prompt (const char *prmt, char *fn, size_t fn_len, const char *dfn);
+extern int prompt (const char *prmt, char *fn, size_t fn_len, const char *dfn);
 
 /* print contents of a string similar to hexdump */
 extern void debugbuf (const char *name, const unsigned char *buf, size_t buf_len);

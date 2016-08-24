@@ -35,6 +35,10 @@ int have_sourcefn = 0;
 char destfn[1024];
 int have_destfn = 0;
 
+struct buffer *filebuffer = NULL;
+
+struct opensshkey *privatekey = NULL;
+
 /* ======  MAIN  ====== */
 
 int main(int argc, char **argv)
@@ -49,14 +53,14 @@ int main(int argc, char **argv)
         /* filename */
         case 'f':
 			if (strncpy(sourcefn, optarg, sizeof sourcefn) == NULL)
-				fatal(ERR_BAD_ARGUMENT, "privatekey filename too long");
+				fatale(ERR_BAD_ARGUMENT);
 			have_sourcefn = 1;
             break;
 
         /* destination directory */
         case 'd':
 			if (strncpy(destfn, optarg, sizeof destfn) == NULL)
-			    fatal(ERR_BAD_ARGUMENT, "destination directory name too long");
+			    fatale(ERR_BAD_ARGUMENT);
 			have_destfn = 1;
 			break;
 
@@ -68,75 +72,33 @@ int main(int argc, char **argv)
 	}
 
     /* prompt for source if not given */
-    if (!have_sourcefn)
-        prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt");
-
-    /* how to successfully put hex data into new buf */
-    struct buffer *hexbuf;
-    if (buffer_new_from_data(&hexbuf, "\0\0\0\0", 4) == SUCCESS)
-        buffer_dump(hexbuf);
-
-
-    /* test buffers for strings */
-    struct buffer *b = newbuffer();
-    buffer_put_string(b, "12345678");
-    buffer_put_string(b, "ABCDEFGH");
-    buffer_put_string(b, "\xFF");
-    buffer_put_string(b, USAGE_MESSAGE);
-
-    struct buffer *concat;
-    if (buffer_new_concat_strings(&concat, b) == SUCCESS)
-        buffer_dump(concat);
-
-    size_t slen = 0;
-    unsigned char *str;
-    if ((e = buffer_read_string(concat, &str, &slen, '\0')) == SUCCESS)
-        printf("read %lu bytes string from buffer: %s\n", slen, str);
-
-//    sshbuf_put_cstring
-
-    fatale(SUCCESS);
+    if (!have_sourcefn &&
+        (e = prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt")) != SUCCESS)
+            cleanreturn(e);
 
     /* load to buffer */
-    struct buffer *filebuffer;
     if ((e = loadfile(sourcefn, &filebuffer)) != 0)
-        printf("loadfile error: %d", e);
+        cleanreturn(e);
 
-    struct opensshkey *privatekey = NULL;
+    /* parse as opensshkey */
     if ((e = openssh_key_v1_parse(filebuffer, &privatekey))!= SUCCESS)
-        printf("PARSING FAILED WITH ERRORCODE %d\n", e);
+        cleanreturn(e);
 
     /* ask for destination */
-    if (!have_destfn)
-        prompt ("Enter a destination filename", destfn, sizeof destfn, "/tmp");
+    if (!have_destfn &&
+        (e = prompt ("Enter a destination filename", destfn, sizeof destfn, "/tmp")) != SUCCESS)
+            cleanreturn(e);
 
+    /* export tinyssh keys */
     if ((e = opensshkey_save_to_tinyssh(privatekey, destfn)) != 0)
-        printf("key export status: %d", e);
+        cleanreturn(e);
 
-    freebuffer(filebuffer);
-    freeopensshkey(privatekey);
+    cleanup:
+        freebuffer(filebuffer);
+        freeopensshkey(privatekey);
 
-    /*
-    struct buffer *newbuff;
-    newbuff = newbuffer();
+    if (e != SUCCESS)
+        fatale(e);
 
-    printf("allocated new buffer\n");
-    buffer_dump(newbuff);
-
-    unsigned char *newdata;
-    int length[]  = {   8,   7,   16,   32};
-    int pattern[] = {0xAE, 0xFF, 0x13, 0xF0};
-
-    for (int i = 0; i < sizeof *length; i++) {
-        if (buffer_reserve(newbuff, length[i], &newdata) == SUCCESS)
-            memset(newdata, pattern[i], length[i]);
-    }
-
-    printf("enlarged buffer with some data\n");
-    buffer_dump(newbuff);
-
-    freebuffer(newbuff);
-    */
-
-	exit(0);
+	exit(e);
 }

@@ -513,9 +513,9 @@ int buffer_new_concat_strings (struct buffer **newbuf, struct buffer *sourcebuf)
     return buffer_new_concat_data(newbuf, sourcebuf, '\0');
 }
 
-/* +-----------------------+ */
-/* | get info about struct | */
-/* +-----------------------+ */
+/* +--------------------------+ */
+/* | get & set info in struct | */
+/* +--------------------------+ */
 
 /* returns pointer to beginning of data */
 unsigned char *buffer_get_dataptr (const struct buffer *buf)
@@ -525,8 +525,17 @@ unsigned char *buffer_get_dataptr (const struct buffer *buf)
     return NULL;
 }
 
+/* return offset in bytes */
+size_t buffer_get_offset (const struct buffer *buf)
+{
+    if (buf != NULL)
+        return buf->offset;
+    return 0;
+}
+
 /* returns pointer to beginning of offset data */
-unsigned char *buffer_get_offsetptr (const struct buffer *buf) {
+unsigned char *buffer_get_offsetptr (const struct buffer *buf)
+{
     if (buf != NULL)
         return buf->data + buf->offset;
     return NULL;
@@ -554,6 +563,16 @@ size_t buffer_get_remaining (const struct buffer *buf)
     if (buf != NULL)
         return buf->size - buf->offset;
     return 0;
+}
+
+/* zeroes the offset in a buffer */
+int buffer_reset_offset (struct buffer *buf)
+{
+    if (buf == NULL)
+        return ERR_NULLPTR;
+    
+    buf->offset = 0;
+    return SUCCESS;
 }
 
 

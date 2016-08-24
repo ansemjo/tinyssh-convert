@@ -50,12 +50,14 @@ int buffer_new_from_data        (struct buffer **newbuf, const char *data, size_
 int buffer_new_from_buffer      (struct buffer **newbuf, const struct buffer *sourcebuf); /* TODO: replace with packing */
 int buffer_new_concat_strings   (struct buffer **newbuf, struct buffer *sourcebuf);
 
-/* attribute getters */
+/* attribute getters & setters */
 unsigned char * buffer_get_dataptr      (const struct buffer *buf);
+         size_t buffer_get_offset       (const struct buffer *buf);
 unsigned char * buffer_get_offsetptr    (const struct buffer *buf);
          size_t buffer_get_datasize     (const struct buffer *buf);
          size_t buffer_get_allocation   (const struct buffer *buf);
          size_t buffer_get_remaining    (const struct buffer *buf);
+            int buffer_reset_offsetptr  (struct buffer *buf);
 
 /* debugging */
 void buffer_dump (const struct buffer *buf);

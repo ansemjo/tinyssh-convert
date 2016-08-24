@@ -446,11 +446,14 @@ size_t buffer_get_remaining (const struct buffer *buf)
 
 
 void buffer_dump (const struct buffer *buf) {
-    if (buf != NULL) debugbuf("STRUCT", (unsigned char *)buf, sizeof(struct buffer));
+    if (buf != NULL) { 
+        debugbuf("STRUCT", (unsigned char *)buf, sizeof(struct buffer));
     #include <stdio.h> /* TODO some these function shall be removed sometime */ 
     printf("%s%p\n%s%lu bytes\n%s%lu bytes\n%s+%lu = %p\n",
             "data address:   ", buf->data,
             "allocation:     ", buf->allocation,
             "data length:    ", buf->size,
             "offset:         ", buf->offset, buf->data + buf->offset);
-    if (buf->data != NULL) debugbuf("BUFFER DATA", buf->data, buf->size); }
+        if (buf->data != NULL) debugbuf("BUFFER DATA", buf->data, buf->size);
+    }
+}

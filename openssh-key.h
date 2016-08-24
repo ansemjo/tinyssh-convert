@@ -9,7 +9,7 @@
 
 #include "utils.h"
 #include "buffer.h"
-#include "fileops.h"
+#include "fileio.h"
 
 /****************************************************************************************/
 

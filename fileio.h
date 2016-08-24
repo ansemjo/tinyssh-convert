@@ -1,5 +1,5 @@
-#ifndef _headerguard_fileops_h_
-#define _headerguard_fileops_h_
+#ifndef _headerguard_FILEIO_h_
+#define _headerguard_FILEIO_h_
 
 #include <unistd.h>
 #include <errno.h>
@@ -14,7 +14,7 @@
 /* status codes are defined in statuscodes.h */
 
 /* chunk at once before putting it into buffer struct */
-#define FILEOPS_CHUNKSIZE 1024
+#define FILEIO_CHUNKSIZE 1024
 
 /****************************************************************************************/
 
@@ -34,4 +34,4 @@ extern int loadfile   (const char *file, struct buffer **filebuf);
 extern int savefile   (const char *file, struct buffer  *filebuf);
 extern int savestring (const char *file, unsigned char *string, size_t stringlen);
 
-#endif /* _headerguard_fileops_h_ */
+#endif /* _headerguard_FILEIO_h_ */

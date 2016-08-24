@@ -41,7 +41,7 @@
 /* local includes */
 #include "errors.h"
 #include "utils.h"
-#include "fileops.h"
+#include "fileio.h"
 #include "buffer.h"
 #include "openssh-parse.h"
 #include "openssh-key.h"
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
         prompt ("Enter a source filename", sourcefn, sizeof sourcefn, "/tmp/nope.txt");
 
     for (int err = 0; err < STATUSMAX; err++)
-        eprintf("%s = %s\n", elabel(err), ereason(err));
+        eprintf("%3d %s = %s\n", err, elabel(err), ereason(err));
     fatale(0);
 
     /* load to buffer */

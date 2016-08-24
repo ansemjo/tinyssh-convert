@@ -1,4 +1,4 @@
-#include "fileops.h"
+#include "fileio.h"
 
 /* open file descriptors */
 extern int openwriting (const char *file) {
@@ -39,7 +39,7 @@ extern int io (ssize_t (*rw) (int, void *, size_t), int fd, void *data, size_t d
 				continue;
 			}
             /* other error */
-            return FILEOPS_IOERROR;
+            return FILEIO_IOERROR;
         
         /* some data was processed */
         } else if (iochunk > 0) {
@@ -71,14 +71,14 @@ extern int loadfile (const char *file, struct buffer **filebuf)
     
     /* open file for reading */
     if ((fd = openreading(file)) == -1)
-        return FILEOPS_CANNOT_OPEN_READING;
+        return FILEIO_CANNOT_OPEN_READING;
 
     /* allocate a new buffer */ 
     if ((*filebuf = newbuffer()) == NULL)
-        return FILEOPS_ALLOCATION_FAIL;
+        return BUFFER_ALLOCATION_FAILED;
 
     /* create a small fixed-size buffer */
-    unsigned char readbuf[ FILEOPS_CHUNKSIZE ];
+    unsigned char readbuf[ FILEIO_CHUNKSIZE ];
     size_t readlen;
     
     /* read file in chunks */
@@ -114,7 +114,7 @@ extern int savestring (const char *file, unsigned char *string, size_t stringlen
     
     /* open for writing */
     if ((fd = openwriting(file)) == -1)
-        return FILEOPS_CANNOT_OPEN_WRITING;
+        return FILEIO_CANNOT_OPEN_WRITING;
 
     /* variable to check written bytes */
     size_t writelen;
@@ -126,7 +126,7 @@ extern int savestring (const char *file, unsigned char *string, size_t stringlen
     if (e != SUCCESS || writelen != stringlen) {
         close(fd);
         unlink(file);
-        return FILEOPS_INCOMPLETE_WRITE;
+        return FILEIO_INCOMPLETE_WRITE;
     }
     
     /* if successful, fsync and close */

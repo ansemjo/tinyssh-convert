@@ -7,8 +7,8 @@
 #include "statuscodes.h"
 
 /* function to build enums and structs from tuples */
-#define AS_ENUM(enum, description) enum
-#define AS_STRUCT(enum, description) { enum, #enum, #description }
+#define AS_ENUM(enum, ...) enum
+#define AS_STRUCT(enum, ...) { enum, #enum, #__VA_ARGS__ }
 
 /* this will build an enum with all statuscodes .. */
 enum errorcodes { STATUSCODES(AS_ENUM), STATUSMAX };

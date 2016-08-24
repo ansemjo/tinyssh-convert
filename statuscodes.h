@@ -25,5 +25,5 @@
     fn( FILEOPS_CANNOT_OPEN_READING,    Cannot open file for reading.               ),\
     fn( FILEOPS_CANNOT_OPEN_WRITING,    Cannot open file for writing.               ),\
     fn( FILEOPS_IOERROR,                General Input/Output error occured.         ),\
-    fn( FILEOPS_INCOMPLETE_WRITE,       Incomplete write & possibly corrupt data.   ),\
+    fn( FILEOPS_INCOMPLETE_WRITE,       Incomplete write, possibly corrupt data.    ),\
     fn( FILEOPS_ALLOCATION_FAIL,        New buffer allocation failed.               )

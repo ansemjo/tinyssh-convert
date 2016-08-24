@@ -1,0 +1,12 @@
+
+DEPS = base64.h buffer.h error.h fileio.h openssh-key.h openssh-parse.h statuscodes.h utilities.h
+OBJS = tinyssh-convert.o base64.o buffer.o fileio.o openssh-key.o openssh-parse.o utilities.o
+
+%.o: %.c $(DEPS)
+	cc -c -o $@ $< -I
+
+tinyssh-convert: $(OBJS)
+	cc -o $@ $^
+
+clean:
+	rm -f tinyssh-convert *.o

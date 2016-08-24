@@ -38,20 +38,7 @@
         string of appropriate length
 */
 
-/* error codes */
-enum openssh_parse_status {
-    OPENSSH_PARSE_SUCCESS =   0,
-    OPENSSH_PARSE_FAILURE = -30,
-
-    OPENSSH_PARSE_INVALID_FORMAT,
-    OPENSSH_PARSE_INVALID_PRIVATE_FORMAT,
-    OPENSSH_PARSE_UNSUPPORTED_CIPHER,
-    OPENSSH_PARSE_UNSUPPORTED_KDF,
-    OPENSSH_PARSE_UNSUPPORTED_MULTIPLEKEYS,
-    OPENSSH_PARSE_UNSUPPORTED_KEY_TYPE,
-    OPENSSH_PARSE_ALLOCATION_FAILURE,
-    OPENSSH_PARSE_INTERNAL_ERROR,
-};
+/* statuscodes are in statuscodes.h */
 
 /****************************************************************************************/
 

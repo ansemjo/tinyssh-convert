@@ -33,9 +33,9 @@ static const struct {
 
 /* print usage message */
 #ifdef USAGE_MESSAGE
-# define usage() fatal(USAGE, "%s\n", USAGE_MESSAGE)
+# define usage() fatal(ERR_USAGE, "%s\n", USAGE_MESSAGE)
 #else
-# define usage() fatal(USAGE, "%s: %s\n", elabel(USAGE), ereason(USAGE))
+# define usage() fatal(ERR_USAGE, "%s: %s\n", elabel(ERR_USAGE), ereason(ERR_USAGE))
 #endif
 
 /* early return, e.g. if some condition failed, but do cleanup first! */

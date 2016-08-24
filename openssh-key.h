@@ -32,16 +32,7 @@ enum openssh_keytypes {
 #define ED25519_SECRET_TINYSSH_NAME ".ed25519.sk"
 #define ED25519_PUBLIC_TINYSSH_NAME "ed25519.pk"
 
-/* error codes */
-enum openssh_key_status {
-    OPENSSH_KEY_SUCCESS =   0,
-    OPENSSH_KEY_FAILURE = -50,
-
-    OPENSSH_KEY_NULLPOINTER,
-    OPENSSH_KEY_MISSING_ARGUMENTS,
-    OPENSSH_KEY_INCOMPATIBLE,
-    OPENSSH_KEY_UNKNOWN_KEYTYPE,
-};
+/* statuscodes are in statuscodes.h */
 
 /****************************************************************************************/
 

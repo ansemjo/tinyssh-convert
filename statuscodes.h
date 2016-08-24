@@ -1,12 +1,12 @@
 /* collection of all following definitions */
-#define STATUSCODES(fn) MISC_STATUS(fn), BUFFER_STATUS(fn), FILEIO_STATUS(fn)
+#define STATUSCODES(fn) MISC_STATUS(fn), BUFFER_STATUS(fn), FILEIO_STATUS(fn), OPENSSH_KEY_STATUS(fn), OPENSSH_PARSE_STATUS(fn)
 
 /* general statuscodes */
 #define MISC_STATUS(fn) \
     fn( SUCCESS,        Everything is fine.                     ),\
     fn( FAILURE,        An unspecified error occured.           ),\
-    fn( USAGE,          Wrong usage of program.                 ),\
-    fn( NULLPOINTER,    Nullpointer in a non-optional argument. )
+    fn( ERR_USAGE,      Wrong usage of program.                 ),\
+    fn( ERR_NULLPTR,    Nullpointer in a non-optional argument. )
 
 /* statuscodes for buffer.h */
 #define BUFFER_STATUS(fn) \
@@ -22,7 +22,23 @@
 
 /* statuscodes for fileio.h */
 #define FILEIO_STATUS(fn) \
-    fn( FILEIO_CANNOT_OPEN_READING,    Cannot open file for reading.               ),\
-    fn( FILEIO_CANNOT_OPEN_WRITING,    Cannot open file for writing.               ),\
-    fn( FILEIO_IOERROR,                General Input/Output error occured.         ),\
-    fn( FILEIO_INCOMPLETE_WRITE,       Incomplete write, possibly corrupt data.    )
+    fn( FILEIO_CANNOT_OPEN_READING,     Cannot open file for reading.               ),\
+    fn( FILEIO_CANNOT_OPEN_WRITING,     Cannot open file for writing.               ),\
+    fn( FILEIO_IOERROR,                 General Input/Output error occured.         ),\
+    fn( FILEIO_INCOMPLETE_WRITE,        Incomplete write, possibly corrupt data.    )
+
+/* statuscodes for openssh-key.h */
+#define OPENSSH_KEY_STATUS(fn) \
+    fn( OPENSSH_KEY_INCOMPATIBLE,       Tried to call a function for a different keytype.   ),\
+    fn( OPENSSH_KEY_UNKNOWN_KEYTYPE,    The keytype is unknown or unspecified.              ),\
+    fn( OPENSSH_KEY_ALLOCATION_FAILURE, Failed creating a new key structure.                )
+
+/* statuscodes for openssh-parse.h */
+#define OPENSSH_PARSE_STATUS(fn) \
+    fn( OPENSSH_PARSE_INVALID_FORMAT,               The observed key format did not match the specification.    ),\
+    fn( OPENSSH_PARSE_INVALID_PRIVATE_FORMAT,       The private key was malformed.                              ),\
+    fn( OPENSSH_PARSE_UNSUPPORTED_CIPHER,           This encryption cipher is not supported.                    ),\
+    fn( OPENSSH_PARSE_UNSUPPORTED_KDF,              This key derivation function is not supported.              ),\
+    fn( OPENSSH_PARSE_UNSUPPORTED_MULTIPLEKEYS,     Multiple keys in one file are not supported.                ),\
+    fn( OPENSSH_PARSE_UNSUPPORTED_KEY_TYPE,         This keytype is not supported for parsing.                  ),\
+    fn( OPENSSH_PARSE_INTERNAL_ERROR,               Internal error occured in a parsing function.               )

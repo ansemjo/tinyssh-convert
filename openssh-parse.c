@@ -3,7 +3,7 @@
 /* parse key from a openssh-key-v1 formatted filebuffer */
 int openssh_key_v1_parse (struct buffer *filebuf, struct opensshkey **keyptr)
 {
-    int e = OPENSSH_PARSE_FAILURE;
+    int e = FAILURE;
     struct buffer *encoded = NULL, *decoded = NULL, *privatekeyblob = NULL;
     
     /* allocate temporary buffers for decoding */
@@ -122,12 +122,12 @@ int openssh_key_v1_parse (struct buffer *filebuf, struct opensshkey **keyptr)
 
     /* deserialize key */
     struct opensshkey *newkey = NULL;
-    if ((e = openssh_deserialize_private(privatekeyblob, &newkey)) != OPENSSH_PARSE_SUCCESS)
+    if ((e = openssh_deserialize_private(privatekeyblob, &newkey)) != SUCCESS)
         cleanreturn(e);
 
     /* get comment for key */
     unsigned char *comment;
-    if ((e = buffer_read_string(privatekeyblob, &comment, NULL, '\0')) != OPENSSH_PARSE_SUCCESS)
+    if ((e = buffer_read_string(privatekeyblob, &comment, NULL, '\0')) != SUCCESS)
         cleanreturn(e);
     printf("Successfully parsed %s key with comment: %s\n", opensshkey_get_typename(newkey), comment);
 
@@ -151,7 +151,7 @@ int openssh_key_v1_parse (struct buffer *filebuf, struct opensshkey **keyptr)
 /* deserialize key from buffer */
 int openssh_deserialize_private (struct buffer *buf, struct opensshkey **keyptr)
 {
-    int e = OPENSSH_PARSE_FAILURE;
+    int e = FAILURE;
     struct opensshkey *newkey;
     
     if (keyptr != NULL)
@@ -200,7 +200,7 @@ int openssh_deserialize_private (struct buffer *buf, struct opensshkey **keyptr)
 
             /* allocate new key */
             if ((newkey = newopensshkey(keytype)) == NULL)
-                cleanreturn(OPENSSH_PARSE_ALLOCATION_FAILURE);
+                cleanreturn(OPENSSH_KEY_ALLOCATION_FAILURE);
 
             /* get public and private key from buffer */
             if ((e = buffer_read_string(buf, &ed25519_pk, &pk_len, NULL)) != SUCCESS ||
@@ -234,7 +234,7 @@ int openssh_deserialize_private (struct buffer *buf, struct opensshkey **keyptr)
     }
 
     /* success */
-    e = OPENSSH_PARSE_SUCCESS;
+    e = SUCCESS;
 
     /* housekeeping .. */
     cleanup:

@@ -66,7 +66,7 @@ extern int loadfile (const char *file, struct buffer **filebuf)
 
     /* check for nullpointers and reset filebuf */
     if (filebuf == NULL || file == NULL)
-        return NULLPOINTER;
+        return ERR_NULLPTR;
     *filebuf = NULL;
     
     /* open file for reading */
@@ -110,7 +110,7 @@ extern int savestring (const char *file, unsigned char *string, size_t stringlen
 
     /* check for nullpointers */
     if (string == NULL || file == NULL)
-        return NULLPOINTER;
+        return ERR_NULLPTR;
     
     /* open for writing */
     if ((fd = openwriting(file)) == -1)
@@ -140,7 +140,7 @@ extern int savefile (const char *file, struct buffer *filebuf)
 {
     /* check for nullpointers */
     if (filebuf == NULL || file == NULL)
-        return NULLPOINTER;
+        return ERR_NULLPTR;
     
     /* get pointer to and size of data to write */
     unsigned char *dataptr = buffer_get_dataptr(filebuf);

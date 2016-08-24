@@ -154,7 +154,7 @@ int buffer_put (struct buffer *buf, const void *data, size_t datalength)
     int e = FAILURE;
 
     if (data == NULL)
-        return NULLPOINTER;
+        return ERR_NULLPTR;
 
     /* reserve space */
     if ((e = buffer_reserve(buf, datalength, &put)) != SUCCESS)
@@ -284,7 +284,7 @@ int buffer_get_stringptr (const struct buffer *buf, const unsigned char **string
 
     /* check & clear targets */
     if (buf == NULL || stringptr == NULL || stringlen == NULL)
-        return NULLPOINTER; 
+        return ERR_NULLPTR; 
     *stringptr = NULL;
     *stringlen = 0;
 
@@ -375,7 +375,7 @@ int buffer_new_from_string (struct buffer **buf, const char *string, size_t strl
         *buf = NULL;
     
     if (string == NULL)
-        return NULLPOINTER;
+        return ERR_NULLPTR;
     
     /* allocate new */
     if ((*buf = newbuffer()) == NULL)
@@ -391,7 +391,7 @@ int buffer_new_from_buffer (struct buffer **buf, const struct buffer *sourcebuf)
         *buf = NULL;
 
     if (sourcebuf == NULL)
-        return NULLPOINTER;
+        return ERR_NULLPTR;
     
     return buffer_new_from_string(buf, buffer_get_offsetptr(sourcebuf), buffer_get_remaining(sourcebuf));
 }

@@ -155,7 +155,7 @@ const unsigned char *opensshkey_get_typename (const struct opensshkey *key)
 int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsigned char *sk)
 {
     if (key == NULL)
-        return OPENSSH_KEY_NULLPOINTER;
+        return ERR_NULLPTR;
 
     /* key must be ed25519 key */
     if ( !(key->type == KEY_ED25519 || key->type == KEY_ED25519_CERT) )
@@ -169,16 +169,16 @@ int opensshkey_set_ed25519_keys (struct opensshkey *key, unsigned char *pk, unsi
     if (sk != NULL)
         key->ed25519_sk = sk;
     
-    return OPENSSH_KEY_SUCCESS;
+    return SUCCESS;
 }
 
 /* return public and private part of elliptic curve keys */
 int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned char *dir)
 {
     if (key == NULL)
-        return OPENSSH_KEY_NULLPOINTER;
+        return ERR_NULLPTR;
 
-    int e = OPENSSH_KEY_FAILURE;
+    int e = FAILURE;
 
     /* pointers to data to be written */
     unsigned char *seckey = NULL, *pubkey = NULL;
@@ -204,7 +204,7 @@ int opensshkey_save_to_tinyssh (const struct opensshkey *key, const unsigned cha
                the embedded public key there. use public
                key anyway, as it is easier pointer math */
             if (key->ed25519_sk == NULL || key->ed25519_pk == NULL)
-                cleanreturn(OPENSSH_KEY_NULLPOINTER);
+                cleanreturn(ERR_NULLPTR);
             
             /* set pointers and lengths */
             seckey = key->ed25519_sk;

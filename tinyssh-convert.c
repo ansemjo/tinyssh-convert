@@ -101,7 +101,7 @@ int main(int argc, char **argv)
         printf("loadfile error: %d", e);
 
     struct opensshkey *privatekey = NULL;
-    if ((e = openssh_key_v1_parse(filebuffer, &privatekey))!= OPENSSH_KEY_SUCCESS)
+    if ((e = openssh_key_v1_parse(filebuffer, &privatekey))!= SUCCESS)
         printf("PARSING FAILED WITH ERRORCODE %d\n", e);
 
     /* ask for destination */

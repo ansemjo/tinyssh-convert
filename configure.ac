@@ -4,10 +4,10 @@ AC_PREREQ(2.69)
 
 # This project.
 AC_INIT(tinyssh-convert, 0.2, @ansemjo)
-AM_INIT_AUTOMAKE(foreign subdir-objects)
 AC_CONFIG_SRCDIR(tinyssh-convert.c)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_FILES(Makefile)
+AM_INIT_AUTOMAKE(foreign subdir-objects)
 
 # Check for C compiler.
 AC_PROG_CC
@@ -25,4 +25,4 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memchr strcasecmp strchr strcspn])
 
-AC_OUTPUT(Makefile)
+AC_OUTPUT

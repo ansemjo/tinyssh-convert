@@ -1,211 +1,80 @@
 /*
- * MIT License
- *
- * Copyright (c) 2016 Anton Semjonov
- * This work is derived from ssh-keygen ($OpenBSD: ssh-keygen.c,v 1.290 2016/05/02 09:36:42 djm Exp)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- * Description:
- * This software converts existing ed25519 keys from OpenSSH format to the TinySSH format.
- * TinySSH is a small SSH server put into public domain [https://tinyssh.org/]. 
+ * This file is governed by Licenses which are listed in
+ * the LICENSE file, which shall be included in all copies
+ * and redistributions of this project.
  */
 
-
-/* some openssh globals */
-#include "includes.h"
-
+ #define USAGE_MESSAGE \
+    "Usage: " PACKAGE_NAME " [-hv] [-f keyfile] [-d destination_dir]\n" \
+    "Convert an OpenSSH ed25510 privatekey file to TinySSH\n" \
+    "compatible format keys and save them in destination_dir."
 
 /* system includes */
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
+#include <sys/stat.h>
 
 /* local includes */
-#include "xmalloc.h"
-#include "sshkey.h"
-#include "sshbuf.h"
-#include "crypto_api.h" /* for ED25519_SK_SZ */
-#include "authfile.h"   /* loading private key */    
-#include "pathnames.h"  /* for _PATH_HOST_ED25519_KEY_FILE */
-#include "log.h"
-#include "misc.h"
-#include "ssherr.h"
-#include "atomicio.h"
-
-#define TINYSSH_KEYDIR "/etc/tinyssh/sshkeydir"
-#define TINYSSH_ED25519_SK_NAME ".ed25519.sk"
-#define TINYSSH_ED25519_PK_NAME "ed25519.pk"
-#define OPENSSH_ED25519_KEY "/etc/ssh/ssh_host_ed25519_key"
-
-extern char *__progname;
+#include "errors.h"
+#include "utilities.h"
+#include "fileio.h"
+#include "buffer.h"
+#include "openssh-parse.h"
+#include "openssh-key.h"
 
 /* the secretkey filename */
-char keyfile[1024];
-int have_keyfile = 0;
+#define SOURCEFN_DEFAULT "/etc/ssh/ssh_host_ed25519_key"
+char sourcefn[1024];
+int have_sourcefn = 0;
 
 /* the destination directory */
-char destination[1024];
-int have_destination = 0;
+#define DESTFN_DEFAULT "/etc/tinyssh/sshkeydir"
+char destfn[1024];
+int have_destfn = 0;
 
+/* buffer to load private key */
+struct buffer *filebuffer = NULL;
 
-/* ask for a filename */
-static void ask_filename(const char *prompt, const char *initial, char *filename, size_t f_bufsize)
-{
-	char buf[1024];
-
-    /* display initial prompt */
-	snprintf(filename, f_bufsize, "%s", initial);
-	printf("%s [%s]: ", prompt, filename);
-	fflush(stdout);
-	
-    /* copy to filename buffer */
-    if (fgets(buf, sizeof(buf), stdin) == NULL)	exit(1);
-	buf[strcspn(buf, "\n")] = '\0';
-	if (strcmp(buf, "") != 0) strlcpy(filename, buf, f_bufsize);
-}
-
-
-/* Load a private key */
-static struct sshkey *load_keyfile(const char *filename)
-{
-	char *pass;
-	struct sshkey *private;
-	int r;
-
-    /* try to load with no passphrase & early return */
-	if ((r = sshkey_load_private(filename, "", &private, NULL)) == 0) return private;
-	if (r != SSH_ERR_KEY_WRONG_PASSPHRASE) fatal("Load key \"%s\": %s", filename, ssh_err(r));
-
-    /* ask for passphrase and try to load again */
-	pass = read_passphrase("Enter passphrase: ", RP_ALLOW_STDIN);
-	r = sshkey_load_private(filename, pass, &private, NULL);
-	explicit_bzero(pass, strlen(pass));
-	free(pass);
-    if (r != 0)	fatal("Load key \"%s\": %s", filename, ssh_err(r));
-	return private;
-}
-
-static void write_file(const char *filename, const int mode, void *data, size_t datasize)
-{
-    int fd, oerrno;
-    /* open file descriptor */
-	if ((fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, mode)) < 0)
-        fatal("Cannot open for writing (%s): %s\n", filename, ssh_err(SSH_ERR_SYSTEM_ERROR));
-
-    /* write and close or unlink on failure */
-	if (atomicio(vwrite, fd, data, datasize) != datasize ) {
-		oerrno = errno;
-		close(fd);
-		unlink(filename);
-		errno = oerrno;
-		fatal("Error on writing file (%s): %s\n", filename, ssh_err(SSH_ERR_SYSTEM_ERROR));
-	}
-	close(fd);
-}
-
-
-static void do_convert()
-{
-	struct sshkey *privatekey;
-	struct stat st;
-
-    /* load the key */
-	if (!have_keyfile)
-        ask_filename("Enter filepath to key", OPENSSH_ED25519_KEY,
-                       keyfile, sizeof(keyfile));
-	if (stat(keyfile, &st) < 0) fatal("%s: %s: %s", __progname, keyfile, strerror(errno));
-
-	privatekey = load_keyfile(keyfile);
-	if (privatekey->type != KEY_ED25519) fatal("This is not an ed25519 key. Abort.");
-
-    /* destination */
-    if (!have_destination)
-        ask_filename("Destination directory for tinyssh keys", TINYSSH_KEYDIR,
-                       destination, sizeof(destination));
-
-
-    /* write to files */
-    char skey[1024]; sprintf(skey, "%s/%s", destination, TINYSSH_ED25519_SK_NAME);
-    char pkey[1024]; sprintf(pkey, "%s/%s", destination, TINYSSH_ED25519_PK_NAME);
-
-    printf("Writing %skey to: %s\n", "secret", skey);
-    write_file(skey, 0600, (char *)privatekey->ed25519_sk, ED25519_SK_SZ);
-
-    printf("Writing %skey to: %s\n", "public", pkey);
-    write_file(pkey, 0644, (char *)privatekey->ed25519_pk, ED25519_PK_SZ);
-    
-    /* cleanup */
-    sshkey_free(privatekey);
-    exit(0);
-    
-    exit(0);
-}
-
-
-/* usage info */
-static void usage(void)
-{
-	fprintf(stderr,
-        "Usage: %s [-f keyfile] [-d destination_dir]\n"
-        "Convert an OpenSSH ed25510 privatekey file to TinySSH\n"
-        "compatible format keys and save them in destination_dir.\n",
-        __progname
-    );
-	exit(1);
-}
-
+/* structure to hold deserialized private key */
+struct opensshkey *privatekey = NULL;
 
 /* ======  MAIN  ====== */
 
 int main(int argc, char **argv)
 {
-	int opt;	
+	int opt, e;
 	extern char *optarg;
 
-	ssh_malloc_init();	/* must be called before any mallocs */
-	sanitise_stdfd();   /* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
-	__progname = ssh_get_progname(argv[0]);
-
-	while ((opt = getopt(argc, argv, "?hf:d:")) != -1) {
+    /* parse arguments */
+	while ((opt = getopt(argc, argv, "?hvf:d:")) != -1) {
 		switch (opt) {
-		
+
         /* filename */
         case 'f':
-			if (strlcpy(keyfile, optarg,
-			    sizeof(keyfile)) >= sizeof(keyfile))
-				fatal("Private key filename too long");
-			have_keyfile = 1;
-			break;
+			if (strncpy(sourcefn, optarg, sizeof sourcefn) == NULL)
+				fatale(ERR_BAD_ARGUMENT);
+			have_sourcefn = 1;
+            break;
 
         /* destination directory */
         case 'd':
-			if (strlcpy(destination, optarg,
-			    sizeof(destination)) >= sizeof(destination))
-				fatal("Destination directory name too long");
-			have_destination = 1;
+			if (strncpy(destfn, optarg, sizeof destfn) == NULL)
+			    fatale(ERR_BAD_ARGUMENT);
+			have_destfn = 1;
 			break;
+        
+        /* version display */
+        case 'v':
+            printf("%s v%s", PACKAGE_NAME, PACKAGE_VERSION);
+            #ifdef GITCOMMIT
+                printf(" (commit %s @ %s)\n", GITCOMMIT, PACKAGE_URL);
+            #else
+                printf(" (%s)\n", PACKAGE_URL);
+            #endif
+            exit(0);
+            break;
 
         case 'h':
 		case '?':
@@ -214,7 +83,34 @@ int main(int argc, char **argv)
 		}
 	}
 
-    do_convert();
-    printf("Something went wrong.");
-	exit(0);
+    /* prompt for source if not given */
+    if (!have_sourcefn &&
+        (e = prompt ("Enter a source filename", sourcefn, sizeof sourcefn, SOURCEFN_DEFAULT)) != SUCCESS)
+            cleanreturn(e);
+
+    /* load to buffer */
+    if ((e = loadfile(sourcefn, &filebuffer)) != 0)
+        cleanreturn(e);
+
+    /* parse as opensshkey */
+    if ((e = openssh_key_v1_parse(filebuffer, &privatekey))!= SUCCESS)
+        cleanreturn(e);
+
+    /* ask for destination */
+    if (!have_destfn &&
+        (e = prompt ("Enter a destination directory", destfn, sizeof destfn, DESTFN_DEFAULT)) != SUCCESS)
+            cleanreturn(e);
+
+    /* export tinyssh keys */
+    if ((e = opensshkey_save_to_tinyssh(privatekey, destfn)) != 0)
+        cleanreturn(e);
+
+    cleanup:
+        freebuffer(filebuffer);
+        freeopensshkey(privatekey);
+
+    if (e != SUCCESS)
+        fatale(e);
+
+	exit(e);
 }

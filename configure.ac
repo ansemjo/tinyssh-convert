@@ -3,7 +3,7 @@
 AC_PREREQ(2.69)
 
 # This project.
-AC_INIT(tinyssh-convert, 0.2, [], [], https://github.com/ansemjo/tinyssh-convert)
+AC_INIT(tinyssh-convert, 0.2, [], [], [m4_esyscmd_s([git ls-remote --get-url])])
 AC_DEFINE([GITCOMMIT], ["m4_esyscmd_s([git rev-parse --short HEAD])"])
 AC_CONFIG_SRCDIR(tinyssh-convert.c)
 AC_CONFIG_AUX_DIR(autotools)

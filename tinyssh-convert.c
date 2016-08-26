@@ -68,11 +68,10 @@ int main(int argc, char **argv)
         /* version display */
         case 'v':
             printf("%s v%s", PACKAGE_NAME, PACKAGE_VERSION);
-            #ifdef GITCOMMIT
-                printf(" (commit %s @ %s)\n", GITCOMMIT, PACKAGE_URL);
-            #else
-                printf(" (%s)\n", PACKAGE_URL);
+            #if defined(GITCOMMIT) && defined(PACKAGE_URL)
+                printf(" (commit %s @ %s)", GITCOMMIT, PACKAGE_URL);
             #endif
+            printf("\n");
             exit(0);
             break;
 

@@ -3,6 +3,9 @@
 This is a small program which converts existing [ed25519] keys from [OpenSSH]
 format to the [TinySSH] format.
 
+**2019-04-17** You should probably prefer the Python reimplementation in
+[ansemjo/tinyssh-keyconvert](https://github.com/ansemjo/tinyssh-keyconvert).
+
 # Usage scenario
 
 The conversion enables OpenSSH and TinySSH to run with an identical set of keys,

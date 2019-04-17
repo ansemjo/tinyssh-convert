@@ -8,4 +8,4 @@ tinyssh_convert_SOURCES = tinyssh-convert.c \
 													utilities.h utilities.c \
 													errors.h \
 													statuscodes.h
-CFLAGS = -s -Os
+CFLAGS += -s -Os
